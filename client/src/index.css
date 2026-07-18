@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Quarks follows the real Atoms look: warm eggshell light theme by default,
+   ink dark theme via .dark. shadcn tokens are hsl()-wrapped; habit colors
+   (--q-*) are BARE HSL triples so Tailwind `/ <alpha-value>` works — keep
+   the format. --charcoal is the "suggestion card" surface used in BOTH themes. */
+:root {
+  color-scheme: light;
+  --background: hsl(47, 27%, 92%);
+  --foreground: hsl(42, 10%, 10%);
+  --card: hsl(48, 45%, 98%);
+  --card-foreground: hsl(42, 10%, 10%);
+  --popover: hsl(48, 45%, 98%);
+  --popover-foreground: hsl(42, 10%, 10%);
+  --primary: hsl(42, 10%, 11%);
+  --primary-foreground: hsl(48, 45%, 97%);
+  --secondary: hsl(46, 22%, 88%);
+  --secondary-foreground: hsl(42, 10%, 12%);
+  --muted: hsl(46, 22%, 88%);
+  --muted-foreground: hsl(42, 7%, 44%);
+  --accent: hsl(46, 25%, 85%);
+  --accent-foreground: hsl(42, 10%, 12%);
+  --destructive: hsl(4, 66%, 46%);
+  --destructive-foreground: hsl(48, 45%, 97%);
+  --border: hsl(45, 16%, 84%);
+  --input: hsl(45, 16%, 80%);
+  --ring: hsl(42, 10%, 25%);
+  --radius: 1.25rem;
+
+  /* Dark panel used for suggestion/milestone moments in both themes */
+  --charcoal: hsl(40, 6%, 12%);
+  --charcoal-foreground: hsl(45, 30%, 94%);
+
+  /* Flame gradient (repetition badge) */
+  --flame-a: 38 93% 62%;
+  --flame-b: 25 93% 53%;
+
+  /* The 8 habit colors — tuned to pop on eggshell AND hold up on ink */
+  --q-ember: 25 82% 55%;
+  --q-gold: 42 74% 52%;
+  --q-sage: 140 30% 50%;
+  --q-teal: 174 42% 42%;
+  --q-sky: 205 60% 55%;
+  --q-iris: 258 60% 62%;
+  --q-plum: 300 35% 55%;
+  --q-rose: 345 65% 58%;
+
+  /* Uniform completed pebble — ONE calm neutral for every habit (round 3).
+     Bare HSL triples like the habit colors so hsl(var(--q-done) / a) works. */
+  --q-done: 40 34% 84%;
+  --q-done-border: 40 24% 74%;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: hsl(26, 12%, 7%);
+  --foreground: hsl(40, 30%, 88%);
+  --card: hsl(28, 11%, 10%);
+  --card-foreground: hsl(40, 30%, 88%);
+  --popover: hsl(28, 11%, 11%);
+  --popover-foreground: hsl(40, 30%, 88%);
+  --primary: hsl(40, 30%, 88%);
+  --primary-foreground: hsl(26, 12%, 8%);
+  --secondary: hsl(28, 9%, 14%);
+  --secondary-foreground: hsl(40, 30%, 88%);
+  --muted: hsl(28, 9%, 14%);
+  --muted-foreground: hsl(38, 12%, 62%);
+  --accent: hsl(30, 10%, 16%);
+  --accent-foreground: hsl(40, 30%, 90%);
+  --destructive: hsl(4, 60%, 50%);
+  --destructive-foreground: hsl(40, 30%, 92%);
+  --border: hsl(30, 9%, 17%);
+  --input: hsl(30, 9%, 19%);
+  --ring: hsl(40, 30%, 70%);
+
+  /* Uniform completed pebble on ink — warm charcoal, same for every habit */
+  --q-done: 34 10% 19%;
+  --q-done-border: 34 9% 27%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100dvh;
+    overflow-x: clip; /* tab slide-ins can momentarily poke past the frame */
+  }
+}
+
+@layer utilities {
+  /* Repetition badge gradient */
+  .bolt-badge {
+    background-image: linear-gradient(135deg, hsl(var(--flame-a)), hsl(var(--flame-b)));
+  }
+
+  /* Subtle dot texture behind the Today header */
+  .dot-grid {
+    background-image: radial-gradient(currentColor 1px, transparent 1.4px);
+    background-size: 14px 14px;
+  }
+
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

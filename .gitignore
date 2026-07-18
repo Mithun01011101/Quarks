@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+quarks.json
+.DS_Store
+vite.config.ts.*
+*.tar.gz
+
+# Atoms reference video — studied as reference only, never ships
+_ref.mp4
+client/public/_ref.mp4
+
