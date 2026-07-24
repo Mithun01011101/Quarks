@@ -8,6 +8,8 @@ export default defineConfig({
   out: "./migrations",
   schema: "./shared/schema.ts",
   dialect: "postgresql",
+  // connect-pg-simple owns the session table — never let push touch/drop it.
+  tablesFilter: ["!session"],
   dbCredentials: {
     url: process.env.DATABASE_URL,
   },

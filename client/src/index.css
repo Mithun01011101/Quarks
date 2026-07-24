@@ -46,6 +46,10 @@
   --q-iris: 258 60% 62%;
   --q-plum: 300 35% 55%;
   --q-rose: 345 65% 58%;
+  /* Greyish palette — break-a-bad-habit cards only */
+  --q-slate: 215 14% 47%;
+  --q-stone: 28 8% 48%;
+  --q-ash: 210 5% 60%;
 
   /* Uniform completed pebble — ONE calm neutral for every habit (round 3).
      Bare HSL triples like the habit colors so hsl(var(--q-done) / a) works. */

@@ -24,7 +24,14 @@ export const QUARK_COLORS: QuarkColor[] = [
   { key: "rose", label: "Rose", cssVar: "--q-rose", bg: "bg-q-rose", bgSoft: "bg-q-rose/15", text: "text-q-rose", border: "border-q-rose", ring: "ring-q-rose" },
 ];
 
-const byKey = new Map(QUARK_COLORS.map((c) => [c.key, c]));
+/** Muted tones offered ONLY for break-a-bad-habit cards. */
+export const BREAK_COLORS: QuarkColor[] = [
+  { key: "slate", label: "Slate", cssVar: "--q-slate", bg: "bg-q-slate", bgSoft: "bg-q-slate/15", text: "text-q-slate", border: "border-q-slate", ring: "ring-q-slate" },
+  { key: "stone", label: "Stone", cssVar: "--q-stone", bg: "bg-q-stone", bgSoft: "bg-q-stone/15", text: "text-q-stone", border: "border-q-stone", ring: "ring-q-stone" },
+  { key: "ash", label: "Ash", cssVar: "--q-ash", bg: "bg-q-ash", bgSoft: "bg-q-ash/15", text: "text-q-ash", border: "border-q-ash", ring: "ring-q-ash" },
+];
+
+const byKey = new Map([...QUARK_COLORS, ...BREAK_COLORS].map((c) => [c.key, c]));
 
 export function quarkColor(key: string): QuarkColor {
   return byKey.get(key) ?? QUARK_COLORS[0];

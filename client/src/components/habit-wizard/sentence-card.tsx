@@ -33,21 +33,35 @@ function Slot({ value, placeholder }: { value: string | null; placeholder: strin
  * The sticky implementation-intention card. It stays visible across wizard
  * steps so the sentence visibly assembles as each numbered answer lands.
  */
+const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function daysLabel(scheduleDays: string): string | null {
+  if (!scheduleDays) return null;
+  if (scheduleDays.length === 7) return "every day";
+  return "on " + scheduleDays.split("").map((d) => DAY_SHORT[Number(d)]).join(", ");
+}
+
 export function SentenceCard({
+  name,
+  kind,
   action,
   tinyVersion,
   anytime,
   time,
   location,
+  scheduleDays,
   identity,
   color,
   onShuffle,
 }: {
+  name: string;
+  kind: "build" | "break";
   action: string;
   tinyVersion: string;
   anytime: boolean;
   time: string;
   location: string;
+  scheduleDays: string;
   identity: string;
   color: string;
   onShuffle?: () => void;
@@ -61,6 +75,14 @@ export function SentenceCard({
       className={cn("rounded-2xl border bg-card px-4 pb-3 pt-4 shadow-sm")}
       style={{ borderColor: quarkHsl(color, 0.45) }}
     >
+      {kind === "break" ? (
+        <p className="font-display text-[17px] leading-[1.9] text-foreground/90">
+          <NumChip n="01" /> <Slot value={name.trim() || null} placeholder="the habit to break" />{" "}
+          <NumChip n="02" /> <Slot value={daysLabel(scheduleDays)} placeholder="every day" />, so I
+          can become the type of person that <NumChip n="03" />{" "}
+          <Slot value={identity.trim() || null} placeholder="…" />.
+        </p>
+      ) : (
       <p className="font-display text-[17px] leading-[1.9] text-foreground/90">
         I will <NumChip n="01" /> <Slot value={what} placeholder="do my habit" /> at{" "}
         <NumChip n="02" /> <Slot value={when} placeholder="a time" />
@@ -73,6 +95,7 @@ export function SentenceCard({
         , so I can become the type of person that <NumChip n="03" />{" "}
         <Slot value={identity.trim() || null} placeholder="…" />.
       </p>
+      )}
       {onShuffle && (
         <div className="flex justify-center pt-2.5">
           <button

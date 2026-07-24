@@ -5,7 +5,8 @@ import { z } from "zod";
 export const habits = pgTable("habits", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(), // short label under the circle ("Read")
-  action: text("action").notNull(), // "read one page"
+  kind: text("kind").notNull().default("build"), // 'build' | 'break' (break = avoid a bad habit)
+  action: text("action").notNull(), // "read one page"; for break habits = the title verbatim
   tinyVersion: text("tiny_version"), // 2-minute version; null = action already tiny
   identity: text("identity").notNull(), // "...person that reads every day"
   time: text("time"), // "HH:mm" 24h, or null ("anytime")
@@ -60,10 +61,14 @@ export const focusSessions = pgTable("focus_sessions", {
   endedAt: timestamp("ended_at"),
 });
 
-export const insertHabitSchema = createInsertSchema(habits).omit({
-  id: true,
-  createdAt: true,
-});
+export const insertHabitSchema = createInsertSchema(habits)
+  .omit({
+    id: true,
+    createdAt: true,
+  })
+  .extend({
+    kind: z.enum(["build", "break"]).default("build"),
+  });
 export const insertCompletionSchema = createInsertSchema(completions).omit({
   id: true,
   completedAt: true,

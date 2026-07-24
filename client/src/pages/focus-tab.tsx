@@ -21,7 +21,8 @@ export default function FocusTab() {
   const habits = useMemo(() => {
     if (!view) return [];
     const all = [...view.habits, ...view.stacks.flatMap((s) => s.habits.map((m) => m.habit))];
-    return all.filter((h) => !h.pausedOn);
+    // Break habits are about NOT doing something — a focus session makes no sense.
+    return all.filter((h) => !h.pausedOn && h.kind !== "break");
   }, [view]);
 
   const [habitId, setHabitId] = useState<number | null>(null);

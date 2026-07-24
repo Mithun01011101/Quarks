@@ -21,6 +21,31 @@ export const HABIT_PRESETS: HabitPreset[] = [
   { name: "Walk", action: "step outside for fresh air", tiny: "open the front door", identity: "moves every day", icon: "TreePine" },
 ];
 
+/** Starting points for break-a-bad-habit: title shown verbatim + identity. */
+export type BreakPreset = {
+  name: string;
+  identity: string;
+  icon: string;
+};
+
+export const BREAK_PRESETS: BreakPreset[] = [
+  { name: "No doomscrolling", identity: "puts the phone down", icon: "Phone" },
+  { name: "No snoozing the alarm", identity: "gets up on the first ring", icon: "Bed" },
+  { name: "No sugary drinks", identity: "drinks water first", icon: "GlassWater" },
+  { name: "No late-night snacking", identity: "lets the kitchen close at night", icon: "Moon" },
+  { name: "No impulse buys", identity: "sleeps on every purchase", icon: "Banknote" },
+  { name: "No skipping breakfast", identity: "starts the day fueled", icon: "Coffee" },
+];
+
+export const BREAK_IDENTITY_SUGGESTIONS = [
+  "puts the phone down",
+  "gets up on the first ring",
+  "drinks water first",
+  "doesn't need the habit anymore",
+  "chooses the harder right thing",
+  "keeps promises to themselves",
+];
+
 export const IDENTITY_SUGGESTIONS = [
   "reads every day",
   "stays calm under pressure",

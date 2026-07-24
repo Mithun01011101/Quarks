@@ -133,6 +133,7 @@ export class JsonFileStorage implements IStorage {
     const row: Habit = {
       id: data.nextHabitId++,
       name: habit.name,
+      kind: habit.kind ?? "build",
       action: habit.action,
       tinyVersion: habit.tinyVersion ?? null,
       identity: habit.identity,

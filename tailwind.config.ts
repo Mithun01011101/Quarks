@@ -60,6 +60,9 @@ export default {
         "q-iris": "hsl(var(--q-iris) / <alpha-value>)",
         "q-plum": "hsl(var(--q-plum) / <alpha-value>)",
         "q-rose": "hsl(var(--q-rose) / <alpha-value>)",
+        "q-slate": "hsl(var(--q-slate) / <alpha-value>)",
+        "q-stone": "hsl(var(--q-stone) / <alpha-value>)",
+        "q-ash": "hsl(var(--q-ash) / <alpha-value>)",
       },
       keyframes: {
         "accordion-down": {

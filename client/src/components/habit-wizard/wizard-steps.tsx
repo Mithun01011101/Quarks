@@ -3,8 +3,13 @@ import { icons } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { IDENTITY_SUGGESTIONS, LOCATION_SUGGESTIONS, WIZARD_ICONS } from "@/lib/presets";
-import { QUARK_COLORS } from "@/lib/colors";
+import {
+  BREAK_IDENTITY_SUGGESTIONS,
+  IDENTITY_SUGGESTIONS,
+  LOCATION_SUGGESTIONS,
+  WIZARD_ICONS,
+} from "@/lib/presets";
+import { BREAK_COLORS, QUARK_COLORS } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 import type { WizardValues } from "./habit-wizard";
 
@@ -89,11 +94,9 @@ export function StepDefine({ form }: { form: UseFormReturn<WizardValues> }) {
   );
 }
 
-/** 02 — Make it obvious: time, place, days, optional nudges. */
-export function StepAnchor({ form }: { form: UseFormReturn<WizardValues> }) {
-  const { register, watch, setValue, formState } = form;
-  const anytime = watch("anytime");
-  const location = watch("location");
+/** Days-of-week row, shared by the build anchor step and the break days step. */
+function DaysPicker({ form }: { form: UseFormReturn<WizardValues> }) {
+  const { watch, setValue, formState } = form;
   const scheduleDays = watch("scheduleDays");
 
   const toggleDay = (day: number) => {
@@ -103,6 +106,42 @@ export function StepAnchor({ form }: { form: UseFormReturn<WizardValues> }) {
       : (scheduleDays + d).split("").sort().join("");
     setValue("scheduleDays", next, { shouldValidate: true });
   };
+
+  return (
+    <div className="space-y-2">
+      <Label>Days</Label>
+      <div className="flex gap-1.5">
+        {DAY_LABELS.map((label, day) => {
+          const active = scheduleDays.includes(String(day));
+          return (
+            <button
+              key={day}
+              type="button"
+              aria-label={`Toggle ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day]}`}
+              aria-pressed={active}
+              onClick={() => toggleDay(day)}
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-full border text-sm font-medium transition-colors",
+                active
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-secondary/50 text-muted-foreground",
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <FieldError message={formState.errors.scheduleDays?.message} />
+    </div>
+  );
+}
+
+/** 02 — Make it obvious: time, place, days, optional nudges. */
+export function StepAnchor({ form }: { form: UseFormReturn<WizardValues> }) {
+  const { register, watch, setValue, formState } = form;
+  const anytime = watch("anytime");
+  const location = watch("location");
 
   return (
     <div className="space-y-5">
@@ -144,32 +183,7 @@ export function StepAnchor({ form }: { form: UseFormReturn<WizardValues> }) {
           ))}
         </div>
       </div>
-      <div className="space-y-2">
-        <Label>Days</Label>
-        <div className="flex gap-1.5">
-          {DAY_LABELS.map((label, day) => {
-            const active = scheduleDays.includes(String(day));
-            return (
-              <button
-                key={day}
-                type="button"
-                aria-label={`Toggle ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day]}`}
-                aria-pressed={active}
-                onClick={() => toggleDay(day)}
-                className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-full border text-sm font-medium transition-colors",
-                  active
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-secondary/50 text-muted-foreground",
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-        <FieldError message={formState.errors.scheduleDays?.message} />
-      </div>
+      <DaysPicker form={form} />
       <div className="space-y-2 border-t border-border/70 pt-4">
         <Label>Nudges (optional)</Label>
         <p className="text-xs text-muted-foreground">
@@ -186,30 +200,76 @@ export function StepAnchor({ form }: { form: UseFormReturn<WizardValues> }) {
   );
 }
 
+/** 01 (break) — name the habit to quit; title lands on the card verbatim. */
+export function StepDefineBreak({ form }: { form: UseFormReturn<WizardValues> }) {
+  const { register, formState } = form;
+  return (
+    <div className="space-y-5">
+      <StepHeading title="Name the habit to break">
+        Write it exactly as you want to see it on the card — most people start
+        with "No…". Keep it short and concrete.
+      </StepHeading>
+      <div className="space-y-2">
+        <Label htmlFor="wizard-name">Title</Label>
+        <Input
+          id="wizard-name"
+          placeholder="No doomscrolling"
+          autoComplete="off"
+          {...register("name")}
+        />
+        <FieldError message={formState.errors.name?.message} />
+      </div>
+    </div>
+  );
+}
+
+/** 02 (break) — which days the avoid-it streak counts. */
+export function StepDaysBreak({ form }: { form: UseFormReturn<WizardValues> }) {
+  return (
+    <div className="space-y-5">
+      <StepHeading title="Which days count?">
+        Most bad habits are every-day battles — leave all days on unless the
+        habit truly belongs to certain days.
+      </StepHeading>
+      <DaysPicker form={form} />
+    </div>
+  );
+}
+
 /** 03 — Identity + style: who it makes you, color, icon. */
-export function StepIdentity({ form }: { form: UseFormReturn<WizardValues> }) {
+export function StepIdentity({
+  form,
+  kind = "build",
+}: {
+  form: UseFormReturn<WizardValues>;
+  kind?: "build" | "break";
+}) {
   const { register, setValue, watch, formState } = form;
   const color = watch("color");
   const icon = watch("icon");
+  const isBreak = kind === "break";
+  const palette = isBreak ? BREAK_COLORS : QUARK_COLORS;
+  const suggestions = isBreak ? BREAK_IDENTITY_SUGGESTIONS : IDENTITY_SUGGESTIONS;
 
   return (
     <div className="space-y-5">
-      <StepHeading title="Who does it make you?">
-        Every rep is a vote for the person you're becoming. Finish the
-        sentence, then give the habit a color of its own.
+      <StepHeading title={isBreak ? "Who does quitting make you?" : "Who does it make you?"}>
+        {isBreak
+          ? "Every day you avoid it is a vote for the person you're becoming. Finish the sentence, then pick a muted tone."
+          : "Every rep is a vote for the person you're becoming. Finish the sentence, then give the habit a color of its own."}
       </StepHeading>
       <div className="space-y-2">
         <Label htmlFor="wizard-identity">…the type of person that</Label>
         <Input
           id="wizard-identity"
-          placeholder="reads every day"
+          placeholder={isBreak ? "puts the phone down" : "reads every day"}
           autoComplete="off"
           {...register("identity")}
         />
         <FieldError message={formState.errors.identity?.message} />
       </div>
       <div className="flex flex-wrap gap-2">
-        {IDENTITY_SUGGESTIONS.map((s) => (
+        {suggestions.map((s) => (
           <Chip key={s} onClick={() => setValue("identity", s, { shouldValidate: true })}>
             {s}
           </Chip>
@@ -218,7 +278,7 @@ export function StepIdentity({ form }: { form: UseFormReturn<WizardValues> }) {
       <div className="space-y-2 pt-1">
         <Label>Color</Label>
         <div className="flex flex-wrap gap-2.5">
-          {QUARK_COLORS.map((c) => (
+          {palette.map((c) => (
             <button
               key={c.key}
               type="button"
