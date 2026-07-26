@@ -259,7 +259,7 @@ export function StepIdentity({
           : "Every rep is a vote for the person you're becoming. Finish the sentence, then give the habit a color of its own."}
       </StepHeading>
       <div className="space-y-2">
-        <Label htmlFor="wizard-identity">…the type of person that</Label>
+        <Label htmlFor="wizard-identity">…the type of person who</Label>
         <Input
           id="wizard-identity"
           placeholder={isBreak ? "puts the phone down" : "reads every day"}

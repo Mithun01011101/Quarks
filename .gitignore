@@ -10,3 +10,6 @@ vite.config.ts.*
 _ref.mp4
 client/public/_ref.mp4
 
+
+# graphify knowledge-graph output/cache — regenerated on demand, never ships
+graphify-out/

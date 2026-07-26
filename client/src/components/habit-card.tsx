@@ -114,7 +114,13 @@ export function HabitCard({
       )}
       <motion.button
         type="button"
-        aria-label={`${habit.name} — ${done ? "hold to undo" : "hold to complete"}`}
+        aria-label={`${habit.name} — ${
+          done
+            ? "hold to undo"
+            : habit.kind === "break"
+              ? "hold to mark avoided today"
+              : "hold to complete"
+        }`}
         className={cn(
           "relative block w-full overflow-hidden rounded-[5rem] border text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           done ? "border-transparent" : "border-border/70 bg-card shadow-sm",
@@ -200,7 +206,9 @@ export function HabitCard({
           <span className="font-display text-3xl leading-tight">
             {habit.name}
           </span>
-          <span className="pt-1 text-xs text-muted-foreground">I want to become</span>
+          <span className="pt-1 text-xs text-muted-foreground">
+            I want to become the type of person who
+          </span>
           <span className="font-display text-lg leading-snug text-foreground/90">
             {habit.identity}
           </span>

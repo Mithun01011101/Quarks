@@ -1,5 +1,5 @@
 import { RefreshCw } from "lucide-react";
-import { formatTime12 } from "@/lib/sentence";
+import { daysPhrase, formatTime12, midSentence, placeParts } from "@/lib/sentence";
 import { quarkHsl } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 
@@ -33,14 +33,6 @@ function Slot({ value, placeholder }: { value: string | null; placeholder: strin
  * The sticky implementation-intention card. It stays visible across wizard
  * steps so the sentence visibly assembles as each numbered answer lands.
  */
-const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function daysLabel(scheduleDays: string): string | null {
-  if (!scheduleDays) return null;
-  if (scheduleDays.length === 7) return "every day";
-  return "on " + scheduleDays.split("").map((d) => DAY_SHORT[Number(d)]).join(", ");
-}
-
 export function SentenceCard({
   name,
   kind,
@@ -66,9 +58,10 @@ export function SentenceCard({
   color: string;
   onShuffle?: () => void;
 }) {
-  const what = tinyVersion.trim() || action.trim() || null;
+  const typed = tinyVersion.trim() || action.trim();
+  const what = typed ? midSentence(typed) : null;
   const when = anytime ? "any time" : time ? formatTime12(time) : null;
-  const where = location.trim() || null;
+  const where = placeParts(location);
 
   return (
     <div
@@ -77,10 +70,10 @@ export function SentenceCard({
     >
       {kind === "break" ? (
         <p className="font-display text-[17px] leading-[1.9] text-foreground/90">
-          <NumChip n="01" /> <Slot value={name.trim() || null} placeholder="the habit to break" />{" "}
-          <NumChip n="02" /> <Slot value={daysLabel(scheduleDays)} placeholder="every day" />, so I
-          can become the type of person that <NumChip n="03" />{" "}
-          <Slot value={identity.trim() || null} placeholder="…" />.
+          <NumChip n="01" /> <Slot value={name.trim() || null} placeholder="the habit to break" />,{" "}
+          <NumChip n="02" /> <Slot value={daysPhrase(scheduleDays)} placeholder="every day" />, so I
+          can become the type of person who <NumChip n="03" />{" "}
+          <Slot value={identity.trim() ? midSentence(identity) : null} placeholder="…" />.
         </p>
       ) : (
       <p className="font-display text-[17px] leading-[1.9] text-foreground/90">
@@ -88,12 +81,12 @@ export function SentenceCard({
         <NumChip n="02" /> <Slot value={when} placeholder="a time" />
         {where ? (
           <>
-            {" "}
-            in <Slot value={where.toLowerCase()} placeholder="a place" />
+            {where.prep ? ` ${where.prep} ` : " "}
+            <Slot value={where.place} placeholder="a place" />
           </>
         ) : null}
-        , so I can become the type of person that <NumChip n="03" />{" "}
-        <Slot value={identity.trim() || null} placeholder="…" />.
+        , so I can become the type of person who <NumChip n="03" />{" "}
+        <Slot value={identity.trim() ? midSentence(identity) : null} placeholder="…" />.
       </p>
       )}
       {onShuffle && (
