@@ -1,5 +1,6 @@
 import type { UseFormReturn } from "react-hook-form";
 import { icons } from "lucide-react";
+import type { HabitKind } from "@shared/schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +11,7 @@ import {
   WIZARD_ICONS,
 } from "@/lib/presets";
 import { BREAK_COLORS, QUARK_COLORS } from "@/lib/colors";
+import { IDENTITY_PREFIX } from "@/lib/sentence";
 import { cn } from "@/lib/utils";
 import type { WizardValues } from "./habit-wizard";
 
@@ -242,7 +244,7 @@ export function StepIdentity({
   kind = "build",
 }: {
   form: UseFormReturn<WizardValues>;
-  kind?: "build" | "break";
+  kind?: HabitKind;
 }) {
   const { register, setValue, watch, formState } = form;
   const color = watch("color");
@@ -259,7 +261,7 @@ export function StepIdentity({
           : "Every rep is a vote for the person you're becoming. Finish the sentence, then give the habit a color of its own."}
       </StepHeading>
       <div className="space-y-2">
-        <Label htmlFor="wizard-identity">…the type of person who</Label>
+        <Label htmlFor="wizard-identity">…{IDENTITY_PREFIX}</Label>
         <Input
           id="wizard-identity"
           placeholder={isBreak ? "puts the phone down" : "reads every day"}

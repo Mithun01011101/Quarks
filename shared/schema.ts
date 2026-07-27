@@ -2,10 +2,19 @@ import { pgTable, text, serial, integer, boolean, timestamp, uniqueIndex } from 
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+/**
+ * Every habit kind the app knows about. Adding one here is deliberately a
+ * compile error until its wording exists: `KIND_COPY` and `habitSentence` in
+ * client/src/lib/sentence.ts and `STEPS` in the wizard are all keyed by
+ * HabitKind, so tsc lists every screen that still needs English.
+ */
+export const HABIT_KINDS = ["build", "break"] as const;
+export type HabitKind = (typeof HABIT_KINDS)[number];
+
 export const habits = pgTable("habits", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(), // short label under the circle ("Read")
-  kind: text("kind").notNull().default("build"), // 'build' | 'break' (break = avoid a bad habit)
+  kind: text("kind").$type<HabitKind>().notNull().default("build"), // break = avoid a bad habit
   action: text("action").notNull(), // "read one page"; for break habits = the title verbatim
   tinyVersion: text("tiny_version"), // 2-minute version; null = action already tiny
   identity: text("identity").notNull(), // "...person that reads every day"
@@ -67,7 +76,7 @@ export const insertHabitSchema = createInsertSchema(habits)
     createdAt: true,
   })
   .extend({
-    kind: z.enum(["build", "break"]).default("build"),
+    kind: z.enum(HABIT_KINDS).default("build"),
   });
 export const insertCompletionSchema = createInsertSchema(completions).omit({
   id: true,

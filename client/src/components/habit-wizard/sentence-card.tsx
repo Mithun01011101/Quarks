@@ -1,5 +1,6 @@
 import { RefreshCw } from "lucide-react";
-import { daysPhrase, formatTime12, midSentence, placeParts } from "@/lib/sentence";
+import type { HabitKind } from "@shared/schema";
+import { daysPhrase, formatTime12, IDENTITY_PREFIX, midSentence, placeParts } from "@/lib/sentence";
 import { quarkHsl } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 
@@ -47,7 +48,7 @@ export function SentenceCard({
   onShuffle,
 }: {
   name: string;
-  kind: "build" | "break";
+  kind: HabitKind;
   action: string;
   tinyVersion: string;
   anytime: boolean;
@@ -72,7 +73,7 @@ export function SentenceCard({
         <p className="font-display text-[17px] leading-[1.9] text-foreground/90">
           <NumChip n="01" /> <Slot value={name.trim() || null} placeholder="the habit to break" />,{" "}
           <NumChip n="02" /> <Slot value={daysPhrase(scheduleDays)} placeholder="every day" />, so I
-          can become the type of person who <NumChip n="03" />{" "}
+          can become {IDENTITY_PREFIX} <NumChip n="03" />{" "}
           <Slot value={identity.trim() ? midSentence(identity) : null} placeholder="…" />.
         </p>
       ) : (
@@ -85,7 +86,7 @@ export function SentenceCard({
             <Slot value={where.place} placeholder="a place" />
           </>
         ) : null}
-        , so I can become the type of person who <NumChip n="03" />{" "}
+        , so I can become {IDENTITY_PREFIX} <NumChip n="03" />{" "}
         <Slot value={identity.trim() ? midSentence(identity) : null} placeholder="…" />.
       </p>
       )}

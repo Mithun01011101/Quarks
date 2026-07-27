@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ban, Sprout, X } from "lucide-react";
-import type { Habit, InsertHabit } from "@shared/schema";
+import { HABIT_KINDS, type Habit, type HabitKind, type InsertHabit } from "@shared/schema";
 import { Drawer, DrawerClose, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { api, queryKeys } from "@/lib/api";
@@ -16,7 +16,7 @@ import { StepAnchor, StepDaysBreak, StepDefine, StepDefineBreak, StepIdentity } 
 
 const wizardSchema = z
   .object({
-    kind: z.enum(["build", "break"]),
+    kind: z.enum(HABIT_KINDS),
     name: z.string().trim().min(1, "Give it a short name").max(40, "Keep it under 40 characters"),
     action: z.string().trim().max(80, "Keep it under 80 characters"),
     tinyVersion: z.string().trim().max(80, "Keep it under 80 characters"),
@@ -53,7 +53,7 @@ export type WizardValues = z.infer<typeof wizardSchema>;
 
 // Three numbered steps for each kind. Build: define / obvious / identity.
 // Break: title / days / identity — no action, no time, no reminders.
-const STEPS: Record<"build" | "break", { fields: (keyof WizardValues)[] }[]> = {
+const STEPS: Record<HabitKind, { fields: (keyof WizardValues)[] }[]> = {
   build: [
     { fields: ["name", "action", "tinyVersion"] },
     { fields: ["time", "scheduleDays"] },
@@ -128,7 +128,7 @@ function StepChips({ step }: { step: number }) {
 }
 
 /** First screen when creating: pick what kind of habit this is. */
-function KindChooser({ onPick }: { onPick: (kind: "build" | "break") => void }) {
+function KindChooser({ onPick }: { onPick: (kind: HabitKind) => void }) {
   return (
     <div className="space-y-3 px-5 pt-4">
       <button
@@ -201,7 +201,7 @@ export function HabitWizard({
   const kind = values.kind;
   const steps = STEPS[kind];
 
-  const pickKind = (k: "build" | "break") => {
+  const pickKind = (k: HabitKind) => {
     form.setValue("kind", k);
     // Break habits: greys only, always "anytime". Reset the color default so
     // a build-palette pick never leaks into the break palette (and vice versa).

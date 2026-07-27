@@ -4,6 +4,8 @@
  * type of person who [identity]."
  * Break: "[title], [days], so I can become the type of person who [identity]."
  */
+import type { HabitKind } from "@shared/schema";
+
 export function formatTime12(time: string): string {
   const [hStr, mStr] = time.split(":");
   const h = Number(hStr);
@@ -51,13 +53,40 @@ export function placeParts(location?: string | null): { prep: string; place: str
   return { prep: "in", place: `the ${l}` };
 }
 
+/**
+ * `identity` is stored as a VERB phrase ("reads every day"), so it can never be
+ * rendered bare — it always needs this lead-in, or you get "I want to become
+ * reads every day". Every surface imports this constant instead of retyping it.
+ */
+export const IDENTITY_PREFIX = "the type of person who";
+
 /** The identity clause — the wizard collects a verb phrase ("reads every day"). */
 export function identityClause(identity: string): string {
-  return `the type of person who ${midSentence(identity)}`;
+  return `${IDENTITY_PREFIX} ${midSentence(identity)}`;
+}
+
+/**
+ * Per-kind wording for the habit card. Keyed by HabitKind, so adding a kind to
+ * HABIT_KINDS fails to compile until its copy is written here.
+ */
+export const KIND_COPY: Record<HabitKind, { cardIntro: string; holdLabel: string }> = {
+  build: {
+    cardIntro: `I want to become ${IDENTITY_PREFIX}`,
+    holdLabel: "hold to complete",
+  },
+  break: {
+    cardIntro: `I want to become ${IDENTITY_PREFIX}`,
+    holdLabel: "hold to mark avoided today",
+  },
+};
+
+/** Runtime-safe lookup — a row written by an older build falls back to "build". */
+export function kindCopy(kind?: HabitKind | null): (typeof KIND_COPY)[HabitKind] {
+  return (kind && KIND_COPY[kind]) || KIND_COPY.build;
 }
 
 export function habitSentence(h: {
-  kind?: string | null;
+  kind?: HabitKind | null;
   name?: string;
   action: string;
   tinyVersion?: string | null;
@@ -67,16 +96,28 @@ export function habitSentence(h: {
   identity: string;
 }): string {
   const becoming = `so I can become ${identityClause(h.identity)}`;
-  // Break habits: the title is whatever the user typed ("No vaping", "NOF"),
-  // so it stands on its own — gluing "I will" in front of it makes nonsense
-  // like "I will NOF at any time".
-  if (h.kind === "break") {
-    const what = (h.name?.trim() || h.action).trim();
-    return `${what}, ${daysPhrase(h.scheduleDays)}, ${becoming}.`;
+  const kind: HabitKind = h.kind ?? "build";
+
+  // Switch (not if/else) on purpose: the `never` default means a new HabitKind
+  // is a compile error here rather than silently falling through to the build
+  // template — that fallthrough is what produced "I will NOF at any time".
+  switch (kind) {
+    case "break": {
+      // The title is whatever the user typed ("No vaping", "NOF"), so it stands
+      // on its own — gluing a verb in front of it makes nonsense.
+      const what = (h.name?.trim() || h.action).trim();
+      return `${what}, ${daysPhrase(h.scheduleDays)}, ${becoming}.`;
+    }
+    case "build": {
+      const what = midSentence(h.tinyVersion?.trim() || h.action);
+      const when = h.time ? `at ${formatTime12(h.time)}` : "at any time";
+      const parts = placeParts(h.location);
+      const where = parts ? (parts.prep ? ` ${parts.prep} ${parts.place}` : ` ${parts.place}`) : "";
+      return `I will ${what} ${when}${where}, ${becoming}.`;
+    }
+    default: {
+      const unhandled: never = kind;
+      throw new Error(`No sentence written for habit kind: ${String(unhandled)}`);
+    }
   }
-  const what = midSentence(h.tinyVersion?.trim() || h.action);
-  const when = h.time ? `at ${formatTime12(h.time)}` : "at any time";
-  const parts = placeParts(h.location);
-  const where = parts ? (parts.prep ? ` ${parts.prep} ${parts.place}` : ` ${parts.place}`) : "";
-  return `I will ${what} ${when}${where}, ${becoming}.`;
 }

@@ -8,6 +8,7 @@ import { HabitCircle } from "@/components/habit-circle";
 import { playComplete } from "@/lib/audio";
 import { vibrate } from "@/lib/settings";
 import { quarkColor, quarkHsl } from "@/lib/colors";
+import { kindCopy } from "@/lib/sentence";
 import { cn } from "@/lib/utils";
 
 function dayOfYear(): number {
@@ -114,13 +115,7 @@ export function HabitCard({
       )}
       <motion.button
         type="button"
-        aria-label={`${habit.name} — ${
-          done
-            ? "hold to undo"
-            : habit.kind === "break"
-              ? "hold to mark avoided today"
-              : "hold to complete"
-        }`}
+        aria-label={`${habit.name} — ${done ? "hold to undo" : kindCopy(habit.kind).holdLabel}`}
         className={cn(
           "relative block w-full overflow-hidden rounded-[5rem] border text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           done ? "border-transparent" : "border-border/70 bg-card shadow-sm",
@@ -207,7 +202,7 @@ export function HabitCard({
             {habit.name}
           </span>
           <span className="pt-1 text-xs text-muted-foreground">
-            I want to become the type of person who
+            {kindCopy(habit.kind).cardIntro}
           </span>
           <span className="font-display text-lg leading-snug text-foreground/90">
             {habit.identity}

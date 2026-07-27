@@ -11,6 +11,7 @@ function habit(overrides: Partial<Habit> = {}): Habit {
   return {
     id: 1,
     name: "Read",
+    kind: "build",
     action: "read one page",
     tinyVersion: null,
     identity: "reads every day",
