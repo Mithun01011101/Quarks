@@ -57,7 +57,8 @@ function expect(name: string, actual: unknown, expected: unknown) {
   expect("5-day run", [s.current, s.longest, s.atRisk], [5, 5, false]);
 }
 
-// 2. One miss is forgiven with a warning: done 1-5, miss 6, today 7 unmarked
+// 2. A miss ends the run but keeps the best: done 1-5, miss 6, today 7 unmarked.
+//    The streak resets to 0 and "don't miss twice" warns; longest stays 5.
 {
   const m = marks({
     "2026-07-01": "done",
@@ -67,10 +68,10 @@ function expect(name: string, actual: unknown, expected: unknown) {
     "2026-07-05": "done",
   });
   const s = computeStreak(habit(), m, "2026-07-07");
-  expect("miss once -> atRisk, streak kept", [s.current, s.atRisk], [5, true]);
+  expect("miss once -> streak ends, atRisk warns", [s.current, s.longest, s.atRisk], [0, 5, true]);
 }
 
-// 3. Completing today after a single miss forgives it (5 -> 6, warning gone)
+// 3. Completing today after a miss starts a NEW run at 1 and clears the warning
 {
   const m = marks({
     "2026-07-01": "done",
@@ -81,7 +82,7 @@ function expect(name: string, actual: unknown, expected: unknown) {
     "2026-07-07": "done",
   });
   const s = computeStreak(habit(), m, "2026-07-07");
-  expect("done after one miss -> forgiven", [s.current, s.atRisk], [6, false]);
+  expect("done after a miss -> new run of 1", [s.current, s.longest, s.atRisk], [1, 5, false]);
 }
 
 // 4. Two consecutive misses break the streak
@@ -113,12 +114,12 @@ function expect(name: string, actual: unknown, expected: unknown) {
   expect("scheduled-day adjacency break", [s.current, s.longest], [0, 1]);
 }
 
-// 7. Mon/Wed/Fri: one scheduled miss only -> still alive + warning
+// 7. Mon/Wed/Fri: one scheduled miss ends the run and warns
 {
   const mwf = habit({ scheduleDays: "135", startDate: "2026-07-06" });
   const m = marks({ "2026-07-06": "done" }); // Wed 8th missed, Thu 9th = today
   const s = computeStreak(mwf, m, "2026-07-09");
-  expect("scheduled miss once -> warning", [s.current, s.atRisk], [1, true]);
+  expect("scheduled miss once -> warning", [s.current, s.longest, s.atRisk], [0, 1, true]);
 }
 
 // 8. Skips are excused but transparent: done, miss, skip, miss -> broken
@@ -171,6 +172,24 @@ function expect(name: string, actual: unknown, expected: unknown) {
   entries["2026-07-11"] = "done";
   const rate = completionRate30d(habit(), marks(entries), "2026-07-11");
   expect("rate30d math", [rate], [90]); // 9 done / 10 counted (11 - 1 skipped)
+}
+
+// 13. REGRESSION (reported 2026-08-01): alternating done/miss must NOT keep
+//     climbing. Real "No F" shape: daily habit from Jul 24, done on 25, 26, 28,
+//     29, 31 with misses on 24, 27, 30, today Aug 1 unmarked. The old engine
+//     forgave every single miss and reported 5 — indistinguishable from the
+//     total completion count. Honest answer: 1 (only Jul 31), best run 2.
+{
+  const m = marks({
+    "2026-07-25": "done",
+    "2026-07-26": "done",
+    "2026-07-28": "done",
+    "2026-07-29": "done",
+    "2026-07-31": "done",
+  });
+  const noF = habit({ startDate: "2026-07-24" });
+  const s = computeStreak(noF, m, "2026-08-01");
+  expect("alternating done/miss is not a streak", [s.current, s.longest], [1, 2]);
 }
 
 console.log("");

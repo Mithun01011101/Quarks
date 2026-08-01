@@ -18,8 +18,10 @@ are original.
   strip, per-habit month calendar with last-7-days editing
 - **Settings** (in the three-dot menu) — light/dark/auto theme, sound +
   vibration toggles, reminders (ring while the app is open), JSON export
-- Milestones at 7/14/30/60/100/180/365-day streaks; one missed day is
-  forgiven with a warning, two in a row break the streak; skips are excused.
+- Milestones at 7/14/30/60/100/180/365-day streaks. A streak is consecutive
+  scheduled days — missing one ends it and starts a fresh run (your best run
+  is kept). "Don't miss twice" is the nudge shown after a single miss, not an
+  amnesty. Skips are excused and never break a streak.
 
 ## Run it
 
@@ -29,7 +31,7 @@ npm run dev        # http://localhost:5000  (or double-click "Start Quarks.bat")
 ```
 
 - `npm run check` — TypeScript check
-- `npx tsx scripts/check-streaks.ts` — streak engine sanity suite
+- `npm test` — streak engine + sentence grammar suites
 - `npm run build` / `npm start` — production build / run
 - `npm run db:push` — push schema to Neon (load DATABASE_URL into the shell
   first; drizzle-kit doesn't read .env)

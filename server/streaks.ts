@@ -45,17 +45,28 @@ export function isScheduled(habit: Habit, date: string): boolean {
 }
 
 /**
- * "Don't miss twice" streak, single forward pass from startDate to today.
+ * Consecutive-day streak, single forward pass from startDate to today.
  *
- * - done       -> run grows, any outstanding miss is forgiven (not counted)
- * - skipped    -> excused BUT transparent: it neither grows the run nor
- *                 resets the miss counter (miss, skip, miss still breaks)
- * - today with no mark -> in progress, never a miss
- * - one scheduled miss -> streak survives, atRisk warning
- * - two consecutive scheduled misses -> streak broken
+ * A streak is a run of CONSECUTIVE scheduled days completed — missing a
+ * scheduled day ends it. "Don't miss twice" is the nudge (`atRisk`), not an
+ * amnesty: it warns after a miss so you come back the next day, but the
+ * number itself stays honest.
+ *
+ * - done                -> run grows
+ * - skipped             -> excused and transparent: neither grows nor breaks
+ * - today with no mark  -> still in progress, neither grows nor breaks
+ * - any other scheduled day with no mark -> miss, run resets to 0
+ * - atRisk -> EXACTLY one scheduled miss is outstanding and today isn't done
+ *             ("don't miss twice"). Two or more trailing misses means the
+ *             streak is already gone, so the nudge would be stale.
  *
  * Completions on unscheduled days count toward totals elsewhere but do not
  * participate in the walk.
+ *
+ * NOTE: an earlier version forgave a lone miss and only reset after two in a
+ * row. That let alternating done/miss/done climb forever, so the "streak"
+ * silently became a completion count (5 completions across 8 days reported a
+ * 5-day streak). See check-streaks.ts case 13.
  */
 export function computeStreak(
   habit: Habit,
@@ -63,8 +74,9 @@ export function computeStreak(
   today: string,
 ): StreakInfo {
   let run = 0;
-  let missRun = 0;
   let longest = 0;
+  // Consecutive scheduled misses running up to (but excluding) today.
+  let trailingMisses = 0;
 
   if (habit.startDate <= today) {
     let d = habit.startDate;
@@ -73,25 +85,26 @@ export function computeStreak(
         const mark = marks.get(d);
         if (mark === "done") {
           run += 1;
-          missRun = 0;
           if (run > longest) longest = run;
+          if (d !== today) trailingMisses = 0;
         } else if (mark === "skipped") {
-          // excused: transparent to both counters
+          // excused: transparent to the run and to the warning
         } else if (d === today) {
-          // unfinished today is never a miss
+          // unfinished today: still in progress, never a miss
         } else {
-          missRun += 1;
-          if (missRun >= 2) {
-            run = 0;
-            missRun = 0;
-          }
+          run = 0;
+          trailingMisses += 1;
         }
       }
       d = addDaysStr(d, 1);
     }
   }
 
-  return { current: run, longest, atRisk: missRun === 1 && run > 0 };
+  return {
+    current: run,
+    longest,
+    atRisk: trailingMisses === 1 && marks.get(today) !== "done",
+  };
 }
 
 /**
