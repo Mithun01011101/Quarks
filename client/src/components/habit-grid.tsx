@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 function StreakLine({ habit }: { habit: TodayHabit }) {
   if (habit.streak.atRisk && habit.status !== "done") {
-    return <p className="text-[11px] font-medium text-q-gold">don't miss twice</p>;
+    return <p className="text-[11px] font-medium text-q-amber">don't miss twice</p>;
   }
   if (habit.streak.current > 0) {
     return (

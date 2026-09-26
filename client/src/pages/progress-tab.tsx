@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, SlidersHorizontal } from "lucide-react";
+import { ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import type { ProgressOverview } from "@shared/schema";
 import { HabitDetailPage } from "@/pages/habit-detail";
 import { AnimatedNumber } from "@/components/animated-number";
+import { SegmentedControl } from "@/components/segmented-control";
 import { Switch } from "@/components/ui/switch";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
-  DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { useTabReselect } from "@/hooks/use-tab-reselect";
 import { queryKeys } from "@/lib/api";
 import { localToday } from "@/lib/dates";
 import { quarkColor, quarkHsl } from "@/lib/colors";
@@ -19,6 +21,7 @@ import { cn } from "@/lib/utils";
 const MILESTONES = [7, 14, 30, 60, 100, 180, 365];
 
 // ---- The widget catalog: every stat the user can pin, iOS-widget style ----
+// (Total repetitions is the big number above the grid, so it isn't a widget.)
 
 type WidgetDef = {
   key: string;
@@ -28,14 +31,17 @@ type WidgetDef = {
 };
 
 const WIDGET_CATALOG: WidgetDef[] = [
-  { key: "reps", label: "Repetitions", caption: "votes cast, all time", value: (o) => o.totalReps },
   { key: "bestStreak", label: "Best streak", caption: "days, all time", value: (o) => o.bestStreak },
   { key: "rate30d", label: "30-day rate", caption: "of scheduled reps done", value: (o) => `${o.rate30d}%` },
   {
-    key: "topStreak",
-    label: "Live streak",
-    caption: "longest right now",
-    value: (o) => Math.max(0, ...o.habits.map((h) => h.streak.current)),
+    key: "perfectDays",
+    label: "Perfect days",
+    caption: "all-done days, last 30",
+    value: (o) =>
+      o.last30.filter((d) => {
+        const due = d.scheduled - d.scheduledSkipped;
+        return due > 0 && d.scheduledDone >= due;
+      }).length,
   },
   {
     key: "weekDone",
@@ -44,16 +50,16 @@ const WIDGET_CATALOG: WidgetDef[] = [
     value: (o) => o.last30.slice(-7).reduce((sum, d) => sum + d.done, 0),
   },
   {
-    key: "perfectDays",
-    label: "Perfect days",
-    caption: "all-done days, last 30",
-    value: (o) => o.last30.filter((d) => d.scheduled > 0 && d.done >= d.scheduled).length,
+    key: "topStreak",
+    label: "Live streak",
+    caption: "longest right now",
+    value: (o) => Math.max(0, ...o.habits.map((h) => h.streak.current)),
   },
   { key: "activeHabits", label: "Active habits", caption: "currently in rotation", value: (o) => o.activeHabits },
   { key: "focusMinutes", label: "Focus minutes", caption: "time held, all time", value: (o) => o.focusMinutes },
 ];
 
-const DEFAULT_WIDGETS = ["reps", "bestStreak", "rate30d", "perfectDays"];
+const DEFAULT_WIDGETS = ["bestStreak", "rate30d", "perfectDays", "weekDone"];
 const WIDGETS_KEY = "quarks-widgets";
 
 function loadWidgets(): string[] {
@@ -61,12 +67,25 @@ function loadWidgets(): string[] {
     const raw = localStorage.getItem(WIDGETS_KEY);
     if (!raw) return DEFAULT_WIDGETS;
     const arr = JSON.parse(raw);
-    return Array.isArray(arr)
-      ? arr.filter((k: unknown) => WIDGET_CATALOG.some((w) => w.key === k))
-      : DEFAULT_WIDGETS;
+    if (!Array.isArray(arr)) return DEFAULT_WIDGETS;
+    // The old "Repetitions" widget duplicated the big number; its slot
+    // becomes "This week".
+    const migrated = arr.map((k: unknown) => (k === "reps" ? "weekDone" : k));
+    return WIDGET_CATALOG.map((w) => w.key).filter((k) => migrated.includes(k));
   } catch {
     return DEFAULT_WIDGETS;
   }
+}
+
+function SectionLabel({ id, children }: { id?: string; children: React.ReactNode }) {
+  return (
+    <p
+      id={id}
+      className="px-1 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+    >
+      {children}
+    </p>
+  );
 }
 
 function WidgetGrid({
@@ -80,41 +99,41 @@ function WidgetGrid({
 }) {
   const widgets = WIDGET_CATALOG.filter((w) => selected.includes(w.key));
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between px-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Widgets
-        </p>
+    <section aria-labelledby="widgets-title" className="space-y-2">
+      <div className="flex h-11 items-center justify-between">
+        <SectionLabel id="widgets-title">Widgets</SectionLabel>
         <button
           type="button"
           onClick={onEdit}
-          className="flex cursor-pointer items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="flex h-11 cursor-pointer items-center gap-1.5 rounded-full bg-secondary pl-3 pr-4 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <SlidersHorizontal size={12} /> Edit
+          <SlidersHorizontal size={15} aria-hidden /> Edit
         </button>
       </div>
       {widgets.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-xs text-muted-foreground">
+        <p className="rounded-3xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
           No widgets pinned. Tap Edit to choose your stats.
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-2.5">
-          {widgets.map((w) => (
-            <div key={w.key} className="rounded-3xl border border-border/70 bg-card px-4 py-4">
-              <p className="text-xs font-semibold text-muted-foreground">{w.label}</p>
-              <p className="font-display pt-1 text-3xl tabular-nums">
-                {typeof w.value(overview) === "number" ? (
-                  <AnimatedNumber value={w.value(overview) as number} />
-                ) : (
-                  w.value(overview)
-                )}
-              </p>
-              <p className="pt-0.5 text-[10px] text-muted-foreground">{w.caption}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 gap-3">
+          {widgets.map((w) => {
+            const value = w.value(overview);
+            return (
+              <div
+                key={w.key}
+                className="flex min-h-[100px] flex-col gap-0.5 rounded-3xl border border-border/80 bg-card px-4 py-3.5"
+              >
+                <p className="text-[13px] font-semibold text-muted-foreground">{w.label}</p>
+                <p className="font-display text-[32px] leading-9">
+                  {typeof value === "number" ? <AnimatedNumber value={value} /> : value}
+                </p>
+                <p className="text-xs text-muted-foreground">{w.caption}</p>
+              </div>
+            );
+          })}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -128,56 +147,49 @@ function RepetitionBars({
   const sorted = [...overview.habits].sort((a, b) => b.reps - a.reps);
   const max = Math.max(1, ...sorted.map((h) => h.reps));
   return (
-    <div className="space-y-2">
-      <p className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Repetitions by habit
-      </p>
-      <div className="space-y-2.5">
+    <section aria-labelledby="by-habit-title" className="space-y-1">
+      <SectionLabel id="by-habit-title">By habit</SectionLabel>
+      <div>
         {sorted.map((h) => {
-          const pct = Math.max(9, Math.round((h.reps / max) * 100));
-          const wide = pct >= 26;
+          const pct = h.reps === 0 ? 0 : Math.max(3, Math.round((h.reps / max) * 100));
+          const note = h.streak.atRisk
+            ? "Don't miss twice"
+            : h.streak.current > 0
+              ? `${h.streak.current}-day streak`
+              : "";
           return (
             <button
               key={h.id}
               type="button"
               onClick={() => onOpen(h.id)}
-              className="block w-full cursor-pointer text-left"
+              aria-label={`${h.name}: ${h.reps} ${h.reps === 1 ? "rep" : "reps"}${note ? `, ${note.toLowerCase()}` : ""}. Open history.`}
+              className="block w-full cursor-pointer rounded-2xl px-1 py-2 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <p className="flex items-baseline justify-between px-1 pb-1">
-                <span className="font-display text-[15px]">{h.name}</span>
-                {h.streak.atRisk ? (
-                  <span className="text-[11px] font-medium text-q-gold">don't miss twice</span>
-                ) : h.streak.current > 0 ? (
-                  <span className="text-[11px] tabular-nums text-muted-foreground">
-                    {h.streak.current} day streak
-                  </span>
-                ) : null}
-              </p>
-              <div className="h-9 w-full overflow-hidden rounded-full bg-secondary/70">
-                <div
-                  className="flex h-full items-center justify-end rounded-full pr-3"
-                  style={{
-                    width: `${pct}%`,
-                    backgroundImage: `linear-gradient(90deg, ${quarkHsl(h.color, 0.75)}, ${quarkHsl(h.color, 1)})`,
-                  }}
-                >
-                  {wide && (
-                    <span className="text-sm font-semibold tabular-nums text-white drop-shadow-sm">
-                      {h.reps}
-                    </span>
+              <span className="flex items-baseline gap-2">
+                <span className="max-w-[60%] shrink-0 truncate font-display text-[17px] leading-[22px]">
+                  {h.name}
+                </span>
+                <span
+                  className={cn(
+                    "min-w-0 flex-1 truncate text-xs",
+                    h.streak.atRisk ? "font-semibold text-q-amber" : "text-muted-foreground",
                   )}
-                </div>
-                {!wide && (
-                  <span className="relative -top-7 float-right pr-3 text-sm font-semibold tabular-nums text-muted-foreground">
-                    {h.reps}
-                  </span>
-                )}
-              </div>
+                >
+                  {note}
+                </span>
+                <span className="text-[15px] font-semibold tabular-nums">{h.reps}</span>
+              </span>
+              <span className="mt-1.5 block h-2 w-full overflow-hidden rounded-full bg-secondary">
+                <span
+                  className="block h-full rounded-full"
+                  style={{ width: `${pct}%`, backgroundColor: quarkHsl(h.color) }}
+                />
+              </span>
             </button>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -189,7 +201,7 @@ function MilestonesView({
   onOpen: (id: number) => void;
 }) {
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
       {overview.habits.map((h) => {
         const color = quarkColor(h.color);
         const achieved = MILESTONES.filter((m) => m <= h.streak.longest);
@@ -200,44 +212,45 @@ function MilestonesView({
             key={h.id}
             type="button"
             onClick={() => onOpen(h.id)}
-            className="block w-full cursor-pointer rounded-3xl border border-border/70 bg-card px-4 py-4 text-left transition-colors hover:bg-accent/40"
+            className="block w-full cursor-pointer rounded-3xl border border-border/80 bg-card px-4 py-4 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <div className="flex items-center gap-2.5">
-              <span className={cn("h-3 w-3 shrink-0 rounded-full", color.bg)} />
-              <p className="min-w-0 flex-1 truncate font-display text-[15px]">{h.name}</p>
-              <ChevronRight size={15} className="shrink-0 text-muted-foreground" />
-            </div>
+            <span className="flex items-center gap-2.5">
+              <span className={cn("h-3 w-3 shrink-0 rounded-full", color.bg)} aria-hidden />
+              <span className="min-w-0 flex-1 truncate font-display text-[17px]">{h.name}</span>
+              <ChevronRight size={16} className="shrink-0 text-muted-foreground" aria-hidden />
+            </span>
             {next ? (
               <>
-                <p className="pt-2.5 text-xs text-muted-foreground">
+                <span className="block pt-2.5 text-[13px] text-muted-foreground">
                   <span className="font-semibold tabular-nums text-foreground">
                     {h.streak.current}
                   </span>{" "}
                   of {next} days — {next - h.streak.current} to the next milestone
-                </p>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary/70">
-                  <div
-                    className="h-full rounded-full"
-                    style={{ width: `${pct}%`, backgroundColor: quarkHsl(h.color, 0.9) }}
+                </span>
+                <span className="mt-2 block h-2 w-full overflow-hidden rounded-full bg-secondary">
+                  <span
+                    className="block h-full rounded-full"
+                    style={{ width: `${pct}%`, backgroundColor: quarkHsl(h.color) }}
                   />
-                </div>
+                </span>
               </>
             ) : (
-              <p className="pt-2.5 text-xs text-muted-foreground">
+              <span className="block pt-2.5 text-[13px] text-muted-foreground">
                 Every milestone reached. Remarkable.
-              </p>
+              </span>
             )}
             {achieved.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-2.5">
+              <span className="flex flex-wrap gap-1.5 pt-3">
                 {achieved.map((m) => (
                   <span
                     key={m}
-                    className="bolt-badge rounded-lg px-2 py-0.5 text-[10px] font-bold text-white"
+                    aria-label={`${m}-day milestone reached`}
+                    className="bolt-badge rounded-lg px-2 py-0.5 text-[11px] font-bold"
                   >
                     {m}
                   </span>
                 ))}
-              </div>
+              </span>
             )}
           </button>
         );
@@ -252,6 +265,13 @@ export default function ProgressTab() {
   const [view, setView] = useState<"progress" | "milestones">("progress");
   const [widgets, setWidgets] = useState<string[]>(loadWidgets);
   const [editOpen, setEditOpen] = useState(false);
+  const scrollBack = useRef(0);
+
+  // Tapping the Progress tab again closes a habit's history page.
+  useTabReselect("progress", () => {
+    setSelectedId(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 
   const { data, isLoading, error } = useQuery<ProgressOverview>({
     queryKey: queryKeys.progress(today),
@@ -271,105 +291,133 @@ export default function ProgressTab() {
     });
   };
 
+  const openHabit = (id: number) => {
+    scrollBack.current = window.scrollY;
+    setSelectedId(id);
+    window.scrollTo(0, 0);
+  };
+
   if (selectedId !== null) {
-    return <HabitDetailPage habitId={selectedId} onClose={() => setSelectedId(null)} />;
+    return (
+      <HabitDetailPage
+        habitId={selectedId}
+        onClose={() => {
+          setSelectedId(null);
+          const y = scrollBack.current;
+          requestAnimationFrame(() => window.scrollTo(0, y));
+        }}
+      />
+    );
   }
 
+  const title = (
+    <h1 className="px-1 font-display text-[30px] font-medium leading-[34px] tracking-[-0.01em]">
+      Progress
+    </h1>
+  );
+
   if (isLoading) {
-    return <p className="px-1 py-8 text-sm text-muted-foreground">Loading…</p>;
+    return (
+      <div className="space-y-4">
+        {title}
+        <p className="px-1 py-8 text-sm text-muted-foreground">Loading…</p>
+      </div>
+    );
   }
   if (error) {
     return (
-      <p className="px-1 py-8 text-sm text-destructive">
-        Couldn't load progress: {(error as Error).message}
-      </p>
+      <div className="space-y-4">
+        {title}
+        <p className="px-1 py-8 text-sm text-destructive">
+          Couldn't load progress: {(error as Error).message}
+        </p>
+      </div>
     );
   }
   if (!data || data.habits.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-        <h2 className="font-display text-xl">Nothing to chart yet</h2>
-        <p className="max-w-[240px] text-sm text-muted-foreground">
-          Create a habit on the Today tab and complete it — your progress
-          starts here.
-        </p>
+      <div className="space-y-4">
+        {title}
+        <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+          <h2 className="font-display text-xl">Nothing to chart yet</h2>
+          <p className="max-w-[240px] text-sm text-muted-foreground">
+            Create a habit on the Today tab and complete it — your progress starts here.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5 py-2">
-      {/* Progress | Milestones pill tabs */}
-      <div className="flex gap-2">
-        {(["progress", "milestones"] as const).map((v) => (
-          <button
-            key={v}
-            type="button"
-            aria-pressed={view === v}
-            onClick={() => setView(v)}
-            className={cn(
-              "cursor-pointer rounded-full border px-4 py-2 text-sm font-medium capitalize transition-colors",
-              view === v
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border/70 bg-card text-muted-foreground hover:bg-accent",
-            )}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
+    <div className="space-y-4 pb-2">
+      {title}
+
+      <SegmentedControl
+        label="Progress view"
+        options={[
+          { value: "progress", label: "Progress" },
+          { value: "milestones", label: "Milestones" },
+        ]}
+        value={view}
+        onChange={setView}
+      />
 
       {view === "progress" ? (
         <>
-          <WidgetGrid overview={data} selected={widgets} onEdit={() => setEditOpen(true)} />
-
-          <div className="rounded-[2rem] border border-border/70 bg-card px-6 py-6">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Total repetitions
+          <div className="space-y-1 rounded-[28px] border border-border/80 bg-card px-6 py-5">
+            <p className="font-display text-[64px] font-medium leading-[64px] tracking-[-0.02em]">
+              <span className="sr-only">Total repetitions: </span>
+              <AnimatedNumber value={data.totalReps} />
             </p>
-            <p className="font-display pt-1 text-6xl font-medium tabular-nums">
-              {data.totalReps}
-            </p>
-            <p className="font-display pt-3 text-[15px] leading-snug text-foreground/85">
-              I've made{" "}
-              <span className="underline decoration-q-ember decoration-2 underline-offset-4">
-                {data.totalReps} vote{data.totalReps === 1 ? "" : "s"}
+            <p className="font-display text-[17px] leading-[23px] text-foreground/90">
+              <span className="underline decoration-bolt decoration-2 underline-offset-4">
+                {data.totalReps === 1 ? "vote" : "votes"}
               </span>{" "}
-              toward the person I'm becoming.
+              toward the person I'm becoming
             </p>
           </div>
 
-          <RepetitionBars overview={data} onOpen={setSelectedId} />
+          <WidgetGrid overview={data} selected={widgets} onEdit={() => setEditOpen(true)} />
+
+          <RepetitionBars overview={data} onOpen={openHabit} />
         </>
       ) : (
-        <MilestonesView overview={data} onOpen={setSelectedId} />
+        <MilestonesView overview={data} onOpen={openHabit} />
       )}
 
       {/* Widget picker */}
       <Drawer open={editOpen} onOpenChange={setEditOpen}>
         <DrawerContent aria-describedby={undefined}>
-          <DrawerHeader className="pb-2 text-left">
+          <div className="flex items-center justify-between px-5 pb-1 pt-2">
             <DrawerTitle className="font-sans text-lg font-bold tracking-tight">
               Choose your widgets
             </DrawerTitle>
-          </DrawerHeader>
+            <DrawerClose asChild>
+              <button
+                type="button"
+                aria-label="Close"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:bg-accent"
+              >
+                <X size={18} />
+              </button>
+            </DrawerClose>
+          </div>
           <div
-            className="space-y-1 overflow-y-auto px-5"
+            className="overflow-y-auto px-5"
             style={{ paddingBottom: "max(env(safe-area-inset-bottom), 20px)" }}
           >
             {WIDGET_CATALOG.map((w) => (
-              <div
-                key={w.key}
-                className="flex items-center justify-between gap-3 rounded-2xl px-2 py-2.5"
-              >
+              <div key={w.key} className="flex min-h-[60px] items-center justify-between gap-3 px-1 py-2">
                 <div>
-                  <p className="text-sm font-medium">{w.label}</p>
-                  <p className="text-xs text-muted-foreground">{w.caption}</p>
+                  <label htmlFor={`widget-${w.key}`} className="text-[15px] font-medium">
+                    {w.label}
+                  </label>
+                  <p className="text-[13px] text-muted-foreground">{w.caption}</p>
                 </div>
                 <Switch
+                  id={`widget-${w.key}`}
                   checked={widgets.includes(w.key)}
                   onCheckedChange={() => toggleWidget(w.key)}
-                  aria-label={`Show ${w.label} widget`}
                 />
               </div>
             ))}

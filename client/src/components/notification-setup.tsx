@@ -48,7 +48,7 @@ export function NotificationSetup() {
             : "Get a nudge at each habit's reminder time while Quarks is open."}
         </p>
         {permission === "default" && (
-          <Button size="sm" variant="secondary" className="mt-2.5" onClick={() => request()}>
+          <Button variant="secondary" className="mt-2.5 h-11" onClick={() => request()}>
             Allow notifications
           </Button>
         )}

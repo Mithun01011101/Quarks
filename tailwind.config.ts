@@ -2,6 +2,9 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
+  // Hover styles only on devices that really hover — no "stuck" hover tint
+  // after a tap on a phone.
+  future: { hoverOnlyWhenSupported: true },
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
@@ -15,42 +18,42 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        background: "hsl(var(--background) / <alpha-value>)",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
         card: {
-          DEFAULT: "var(--card)",
-          foreground: "var(--card-foreground)",
+          DEFAULT: "hsl(var(--card) / <alpha-value>)",
+          foreground: "hsl(var(--card-foreground) / <alpha-value>)",
         },
         popover: {
-          DEFAULT: "var(--popover)",
-          foreground: "var(--popover-foreground)",
+          DEFAULT: "hsl(var(--popover) / <alpha-value>)",
+          foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
         },
         primary: {
-          DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)",
+          DEFAULT: "hsl(var(--primary) / <alpha-value>)",
+          foreground: "hsl(var(--primary-foreground) / <alpha-value>)",
         },
         secondary: {
-          DEFAULT: "var(--secondary)",
-          foreground: "var(--secondary-foreground)",
+          DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
+          foreground: "hsl(var(--secondary-foreground) / <alpha-value>)",
         },
         muted: {
-          DEFAULT: "var(--muted)",
-          foreground: "var(--muted-foreground)",
+          DEFAULT: "hsl(var(--muted) / <alpha-value>)",
+          foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
         },
         accent: {
-          DEFAULT: "var(--accent)",
-          foreground: "var(--accent-foreground)",
+          DEFAULT: "hsl(var(--accent) / <alpha-value>)",
+          foreground: "hsl(var(--accent-foreground) / <alpha-value>)",
         },
         destructive: {
-          DEFAULT: "var(--destructive)",
-          foreground: "var(--destructive-foreground)",
+          DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
+          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
         },
-        border: "var(--border)",
-        input: "var(--input)",
-        ring: "var(--ring)",
+        border: "hsl(var(--border) / <alpha-value>)",
+        input: "hsl(var(--input) / <alpha-value>)",
+        ring: "hsl(var(--ring) / <alpha-value>)",
         charcoal: {
-          DEFAULT: "var(--charcoal)",
-          foreground: "var(--charcoal-foreground)",
+          DEFAULT: "hsl(var(--charcoal) / <alpha-value>)",
+          foreground: "hsl(var(--charcoal-foreground) / <alpha-value>)",
         },
         "q-ember": "hsl(var(--q-ember) / <alpha-value>)",
         "q-gold": "hsl(var(--q-gold) / <alpha-value>)",
@@ -63,6 +66,15 @@ export default {
         "q-slate": "hsl(var(--q-slate) / <alpha-value>)",
         "q-stone": "hsl(var(--q-stone) / <alpha-value>)",
         "q-ash": "hsl(var(--q-ash) / <alpha-value>)",
+        // "Don't miss twice" warning (text / chip fill / dashed outline)
+        "q-amber": "hsl(var(--q-amber) / <alpha-value>)",
+        "q-amber-soft": "hsl(var(--q-amber-soft) / <alpha-value>)",
+        "q-amber-line": "hsl(var(--q-amber-line) / <alpha-value>)",
+        // Uniform completed pebble
+        "q-done": "hsl(var(--q-done) / <alpha-value>)",
+        "q-done-border": "hsl(var(--q-done-border) / <alpha-value>)",
+        // Deep end of the yellow badge gradient (underline accents)
+        bolt: "hsl(var(--flame-b) / <alpha-value>)",
       },
       keyframes: {
         "accordion-down": {

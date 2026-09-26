@@ -122,6 +122,8 @@ export type TodayHabit = Habit & {
   status: MarkStatus | null;
   streak: StreakInfo;
   totalReps: number;
+  /** The 7 days ending on the viewed date, oldest first (habit sheet strip). */
+  recent: { date: string; state: DayState }[];
 };
 
 export type TodayStack = Stack & {
@@ -173,5 +175,17 @@ export type ProgressOverview = {
     reps: number;
     rate30d: number;
   }[];
-  last30: { date: string; done: number; scheduled: number }[];
+  /**
+   * One entry per day, oldest first. `done` counts every rep that day (off-day
+   * reps included); `scheduledDone` / `scheduledSkipped` only count habits that
+   * were due, so `scheduledDone / (scheduled - scheduledSkipped)` is how much
+   * of that day's list got done — the Today strip's rings.
+   */
+  last30: {
+    date: string;
+    done: number;
+    scheduled: number;
+    scheduledDone: number;
+    scheduledSkipped: number;
+  }[];
 };

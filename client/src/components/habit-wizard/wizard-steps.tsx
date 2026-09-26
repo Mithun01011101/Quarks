@@ -1,9 +1,9 @@
+import { useRef, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { icons } from "lucide-react";
+import { Bell, Plus, RefreshCw, X, icons } from "lucide-react";
 import type { HabitKind } from "@shared/schema";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { SegmentedControl } from "@/components/segmented-control";
 import {
   BREAK_IDENTITY_SUGGESTIONS,
   IDENTITY_SUGGESTIONS,
@@ -11,30 +11,38 @@ import {
   WIZARD_ICONS,
 } from "@/lib/presets";
 import { BREAK_COLORS, QUARK_COLORS } from "@/lib/colors";
-import { IDENTITY_PREFIX } from "@/lib/sentence";
+import { IDENTITY_PREFIX, daysShort, formatTime12 } from "@/lib/sentence";
 import { cn } from "@/lib/utils";
 import type { WizardValues } from "./habit-wizard";
 
+type Form = UseFormReturn<WizardValues>;
+
 const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function Chip({
   children,
   active = false,
+  dashed = false,
   onClick,
 }: {
   children: React.ReactNode;
   active?: boolean;
+  dashed?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
+      aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+        "h-11 shrink-0 cursor-pointer whitespace-nowrap rounded-full border px-4 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         active
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-secondary/50 text-foreground hover:bg-accent",
+          ? "border-primary bg-primary font-semibold text-primary-foreground"
+          : dashed
+            ? "border-dashed border-muted-foreground/60 hover:bg-accent/60"
+            : "border-input hover:bg-accent/60",
       )}
     >
       {children}
@@ -42,53 +50,113 @@ function Chip({
   );
 }
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-  return <p className="text-xs text-destructive">{message}</p>;
-}
-
-export function StepHeading({ title, children }: { title: string; children: string }) {
+/** Chips in one row that scrolls sideways, bleeding to the sheet's edges. */
+function ChipRow({ children, label }: { children: React.ReactNode; label: string }) {
   return (
-    <div className="space-y-1.5">
-      <h3 className="text-lg font-bold">{title}</h3>
-      <p className="text-sm leading-relaxed text-muted-foreground">{children}</p>
+    <div
+      role="group"
+      aria-label={label}
+      className="scrollbar-hide -mx-5 flex gap-2 overflow-x-auto px-5 pb-0.5"
+    >
+      {children}
     </div>
   );
 }
 
-/** 01 — Define your habit: name, action, tiny version. */
-export function StepDefine({ form }: { form: UseFormReturn<WizardValues> }) {
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="text-[13px] text-destructive">
+      {message}
+    </p>
+  );
+}
+
+function Optional() {
+  return <span className="font-normal text-muted-foreground"> (optional)</span>;
+}
+
+function GroupLabel({
+  id,
+  htmlFor,
+  children,
+  aside,
+}: {
+  id?: string;
+  htmlFor?: string;
+  children: React.ReactNode;
+  aside?: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-6 items-center justify-between gap-3">
+      {htmlFor ? (
+        <label id={id} htmlFor={htmlFor} className="text-sm font-semibold">
+          {children}
+        </label>
+      ) : (
+        <p id={id} className="text-sm font-semibold">
+          {children}
+        </p>
+      )}
+      {aside}
+    </div>
+  );
+}
+
+function ExampleButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="-my-2.5 flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <RefreshCw size={13} aria-hidden /> Try an example
+    </button>
+  );
+}
+
+/** 01 — Define: name, action, two-minute version. */
+export function StepDefine({ form, onShuffle }: { form: Form; onShuffle?: () => void }) {
   const { register, formState } = form;
   return (
-    <div className="space-y-5">
-      <StepHeading title="Define your habit">
-        A habit works best as a small, regular practice — something you could
-        finish in two minutes on a hard day. You can always do more.
-      </StepHeading>
-      <div className="space-y-2">
-        <Label htmlFor="wizard-name">Name</Label>
-        <Input id="wizard-name" placeholder="Read" autoComplete="off" {...register("name")} />
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <GroupLabel htmlFor="wizard-name" aside={onShuffle && <ExampleButton onClick={onShuffle} />}>
+          Name
+        </GroupLabel>
+        <Input
+          id="wizard-name"
+          placeholder="Read"
+          autoComplete="off"
+          enterKeyHint="next"
+          {...register("name")}
+        />
         <FieldError message={formState.errors.name?.message} />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="wizard-action">I will…</Label>
+      <div className="space-y-1.5">
+        <GroupLabel htmlFor="wizard-action">I will…</GroupLabel>
         <Input
           id="wizard-action"
           placeholder="read one page"
           autoComplete="off"
+          enterKeyHint="next"
           {...register("action")}
         />
         <FieldError message={formState.errors.action?.message} />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="wizard-tiny">Two-minute version (optional)</Label>
+      <div className="space-y-1.5">
+        <GroupLabel htmlFor="wizard-tiny">
+          Two-minute version
+          <Optional />
+        </GroupLabel>
         <Input
           id="wizard-tiny"
           placeholder="read one paragraph"
           autoComplete="off"
+          enterKeyHint="done"
           {...register("tinyVersion")}
         />
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[13px] text-muted-foreground">
           Shrink it until showing up is easy. Leave empty if it's already tiny.
         </p>
       </div>
@@ -96,8 +164,8 @@ export function StepDefine({ form }: { form: UseFormReturn<WizardValues> }) {
   );
 }
 
-/** Days-of-week row, shared by the build anchor step and the break days step. */
-function DaysPicker({ form }: { form: UseFormReturn<WizardValues> }) {
+/** Days-of-week toggles, shared by the build and break flows. */
+function DaysPicker({ form }: { form: Form }) {
   const { watch, setValue, formState } = form;
   const scheduleDays = watch("scheduleDays");
 
@@ -110,23 +178,32 @@ function DaysPicker({ form }: { form: UseFormReturn<WizardValues> }) {
   };
 
   return (
-    <div className="space-y-2">
-      <Label>Days</Label>
-      <div className="flex gap-1.5">
+    <div role="group" aria-labelledby="wizard-days" className="space-y-2">
+      <GroupLabel
+        id="wizard-days"
+        aside={
+          <span className="text-[13px] text-muted-foreground">
+            {scheduleDays ? daysShort(scheduleDays) : "No days"}
+          </span>
+        }
+      >
+        Which days?
+      </GroupLabel>
+      <div className="flex justify-between gap-1">
         {DAY_LABELS.map((label, day) => {
           const active = scheduleDays.includes(String(day));
           return (
             <button
               key={day}
               type="button"
-              aria-label={`Toggle ${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day]}`}
+              aria-label={DAY_NAMES[day]}
               aria-pressed={active}
               onClick={() => toggleDay(day)}
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full border text-sm font-medium transition-colors",
+                "flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 active
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-secondary/50 text-muted-foreground",
+                  ? "border-primary bg-primary font-semibold text-primary-foreground"
+                  : "border-input font-medium text-muted-foreground",
               )}
             >
               {label}
@@ -139,114 +216,208 @@ function DaysPicker({ form }: { form: UseFormReturn<WizardValues> }) {
   );
 }
 
-/** 02 — Make it obvious: time, place, days, optional nudges. */
-export function StepAnchor({ form }: { form: UseFormReturn<WizardValues> }) {
-  const { register, watch, setValue, formState } = form;
-  const anytime = watch("anytime");
-  const location = watch("location");
+const REMINDER_KEYS = ["reminder1", "reminder2", "reminder3"] as const;
+
+function minusMinutes(time: string, by: number): string {
+  const [h, m] = time.split(":").map(Number);
+  const total = (h * 60 + m - by + 24 * 60) % (24 * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/** Up to three reminder times, added one at a time. */
+function Reminders({ form }: { form: Form }) {
+  const { watch, setValue } = form;
+  const values = REMINDER_KEYS.map((k) => watch(k));
+  const count = values.filter(Boolean).length;
+
+  const add = () => {
+    const slot = REMINDER_KEYS.findIndex((_, i) => !values[i]);
+    if (slot < 0) return;
+    const time = watch("time");
+    // Default: a quarter of an hour before the habit's own time, else 9 am.
+    const fallback =
+      !watch("anytime") && /^\d{2}:\d{2}$/.test(time) ? minusMinutes(time, 15) : "09:00";
+    setValue(REMINDER_KEYS[slot], fallback, { shouldDirty: true });
+  };
 
   return (
-    <div className="space-y-5">
-      <StepHeading title="Make it obvious">
-        Tie the habit to a time and place that already exist in your day — the
-        clearer the cue, the less you'll rely on willpower.
-      </StepHeading>
-      <div className="flex items-center justify-between">
-        <div>
-          <Label htmlFor="wizard-anytime">Any time of day</Label>
-          <p className="text-xs text-muted-foreground">Or pin it to a moment below.</p>
-        </div>
-        <Switch
-          id="wizard-anytime"
-          checked={anytime}
-          onCheckedChange={(v) => setValue("anytime", v, { shouldValidate: true })}
-        />
+    <div role="group" aria-labelledby="wizard-reminders" className="space-y-2">
+      <GroupLabel id="wizard-reminders">
+        Reminders
+        <Optional />
+      </GroupLabel>
+      <div className="flex flex-wrap gap-2">
+        {REMINDER_KEYS.map((key, i) =>
+          values[i] ? (
+            <div
+              key={key}
+              className="flex h-11 items-center gap-1.5 rounded-full bg-secondary pl-3.5"
+            >
+              <Bell size={15} className="shrink-0 text-muted-foreground" aria-hidden />
+              <input
+                type="time"
+                aria-label={`Reminder ${i + 1}`}
+                value={values[i]}
+                onChange={(e) => setValue(key, e.target.value, { shouldDirty: true })}
+                className="h-11 min-w-0 bg-transparent text-sm font-medium focus-visible:outline-none"
+              />
+              <button
+                type="button"
+                aria-label={`Remove the ${formatTime12(values[i])} reminder`}
+                onClick={() => setValue(key, "", { shouldDirty: true })}
+                className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          ) : null,
+        )}
+        {count < 3 && (
+          <button
+            type="button"
+            onClick={add}
+            className="flex h-11 cursor-pointer items-center gap-1.5 rounded-full border border-dashed border-muted-foreground/60 pl-3 pr-4 text-sm font-medium transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Plus size={16} strokeWidth={2.2} aria-hidden /> Add reminder
+          </button>
+        )}
       </div>
-      {!anytime && (
-        <div className="space-y-2">
-          <Label htmlFor="wizard-time">At</Label>
-          <Input id="wizard-time" type="time" {...register("time")} />
-          <FieldError message={formState.errors.time?.message} />
-        </div>
-      )}
-      <div className="space-y-2">
-        <Label htmlFor="wizard-location">Where (optional)</Label>
-        <Input
-          id="wizard-location"
-          placeholder="Kitchen"
-          autoComplete="off"
-          {...register("location")}
-        />
-        <div className="flex flex-wrap gap-2">
-          {LOCATION_SUGGESTIONS.map((l) => (
-            <Chip key={l} active={location === l} onClick={() => setValue("location", l)}>
-              {l}
-            </Chip>
-          ))}
-        </div>
-      </div>
-      <DaysPicker form={form} />
-      <div className="space-y-2 border-t border-border/70 pt-4">
-        <Label>Nudges (optional)</Label>
-        <p className="text-xs text-muted-foreground">
-          Up to three reminder times. They ring while Quarks is open — turn
-          notifications on from Settings.
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          <Input type="time" aria-label="First reminder" {...register("reminder1")} />
-          <Input type="time" aria-label="Second reminder" {...register("reminder2")} />
-          <Input type="time" aria-label="Third reminder" {...register("reminder3")} />
-        </div>
-      </div>
+      <p className="text-[13px] text-muted-foreground">
+        They ring while Quarks is open — turn notifications on in Settings.
+      </p>
     </div>
   );
 }
 
-/** 01 (break) — name the habit to quit; title lands on the card verbatim. */
-export function StepDefineBreak({ form }: { form: UseFormReturn<WizardValues> }) {
-  const { register, formState } = form;
+/** 02 — Make it obvious: time, place, days, reminders. */
+export function StepAnchor({ form }: { form: Form }) {
+  const { register, watch, setValue, formState } = form;
+  const anytime = watch("anytime");
+  const location = watch("location");
+  const isPreset = LOCATION_SUGGESTIONS.some(
+    (l) => l.toLowerCase() === location.trim().toLowerCase(),
+  );
+  const [custom, setCustom] = useState(() => location.trim() !== "" && !isPreset);
+  const customInput = useRef<HTMLInputElement | null>(null);
+  const { ref: locationRef, ...locationField } = register("location");
+
   return (
     <div className="space-y-5">
-      <StepHeading title="Name the habit to break">
-        Write it exactly as you want to see it on the card — most people start
-        with "No…". Keep it short and concrete.
-      </StepHeading>
       <div className="space-y-2">
-        <Label htmlFor="wizard-name">Title</Label>
-        <Input
-          id="wizard-name"
-          placeholder="No doomscrolling"
-          autoComplete="off"
-          {...register("name")}
+        <GroupLabel>When?</GroupLabel>
+        <SegmentedControl
+          label="When"
+          options={[
+            { value: "any", label: "Any time" },
+            { value: "set", label: "Set a time" },
+          ]}
+          value={anytime ? "any" : "set"}
+          onChange={(v) => setValue("anytime", v === "any", { shouldValidate: true })}
         />
-        <FieldError message={formState.errors.name?.message} />
+        {!anytime && (
+          <div className="space-y-1.5">
+            {/* native time field: the phone's own time wheel / dial */}
+            <Input id="wizard-time" type="time" aria-label="Time" {...register("time")} />
+            <FieldError message={formState.errors.time?.message} />
+          </div>
+        )}
       </div>
+
+      <div className="space-y-2">
+        <GroupLabel>
+          Where?
+          <Optional />
+        </GroupLabel>
+        <ChipRow label="Places">
+          {LOCATION_SUGGESTIONS.map((l) => {
+            const active = !custom && location.trim().toLowerCase() === l.toLowerCase();
+            return (
+              <Chip
+                key={l}
+                active={active}
+                onClick={() => {
+                  setCustom(false);
+                  setValue("location", active ? "" : l);
+                }}
+              >
+                {l}
+              </Chip>
+            );
+          })}
+          <Chip
+            dashed
+            active={custom}
+            onClick={() => {
+              if (!custom && isPreset) setValue("location", "");
+              setCustom(true);
+              window.setTimeout(() => customInput.current?.focus(), 0);
+            }}
+          >
+            Somewhere else…
+          </Chip>
+        </ChipRow>
+        {custom && (
+          <Input
+            id="wizard-location"
+            aria-label="Where"
+            placeholder="the garden"
+            autoComplete="off"
+            enterKeyHint="done"
+            {...locationField}
+            ref={(el) => {
+              locationRef(el);
+              customInput.current = el;
+            }}
+          />
+        )}
+      </div>
+
+      <DaysPicker form={form} />
+      <Reminders form={form} />
+    </div>
+  );
+}
+
+/** 01 (break) — name the habit to quit; the title lands on the card verbatim. */
+export function StepDefineBreak({ form, onShuffle }: { form: Form; onShuffle?: () => void }) {
+  const { register, formState } = form;
+  return (
+    <div className="space-y-1.5">
+      <GroupLabel htmlFor="wizard-name" aside={onShuffle && <ExampleButton onClick={onShuffle} />}>
+        Title
+      </GroupLabel>
+      <Input
+        id="wizard-name"
+        placeholder="No doomscrolling"
+        autoComplete="off"
+        enterKeyHint="done"
+        {...register("name")}
+      />
+      <FieldError message={formState.errors.name?.message} />
+      <p className="text-[13px] text-muted-foreground">
+        Write it exactly as you want it on the card — most people start with "No…".
+      </p>
     </div>
   );
 }
 
 /** 02 (break) — which days the avoid-it streak counts. */
-export function StepDaysBreak({ form }: { form: UseFormReturn<WizardValues> }) {
+export function StepDaysBreak({ form }: { form: Form }) {
   return (
-    <div className="space-y-5">
-      <StepHeading title="Which days count?">
-        Most bad habits are every-day battles — leave all days on unless the
-        habit truly belongs to certain days.
-      </StepHeading>
+    <div className="space-y-3">
       <DaysPicker form={form} />
+      <p className="text-[13px] text-muted-foreground">
+        Most bad habits are every-day battles — leave all days on unless the habit truly
+        belongs to certain days.
+      </p>
     </div>
   );
 }
 
 /** 03 — Identity + style: who it makes you, color, icon. */
-export function StepIdentity({
-  form,
-  kind = "build",
-}: {
-  form: UseFormReturn<WizardValues>;
-  kind?: HabitKind;
-}) {
+export function StepIdentity({ form, kind = "build" }: { form: Form; kind?: HabitKind }) {
   const { register, setValue, watch, formState } = form;
+  const identity = watch("identity");
   const color = watch("color");
   const icon = watch("icon");
   const isBreak = kind === "break";
@@ -255,31 +426,34 @@ export function StepIdentity({
 
   return (
     <div className="space-y-5">
-      <StepHeading title={isBreak ? "Who does quitting make you?" : "Who does it make you?"}>
-        {isBreak
-          ? "Every day you avoid it is a vote for the person you're becoming. Finish the sentence, then pick a muted tone."
-          : "Every rep is a vote for the person you're becoming. Finish the sentence, then give the habit a color of its own."}
-      </StepHeading>
       <div className="space-y-2">
-        <Label htmlFor="wizard-identity">…{IDENTITY_PREFIX}</Label>
-        <Input
-          id="wizard-identity"
-          placeholder={isBreak ? "puts the phone down" : "reads every day"}
-          autoComplete="off"
-          {...register("identity")}
-        />
-        <FieldError message={formState.errors.identity?.message} />
+        <div className="space-y-1.5">
+          <GroupLabel htmlFor="wizard-identity">…{IDENTITY_PREFIX}</GroupLabel>
+          <Input
+            id="wizard-identity"
+            placeholder={isBreak ? "puts the phone down" : "reads every day"}
+            autoComplete="off"
+            enterKeyHint="done"
+            {...register("identity")}
+          />
+          <FieldError message={formState.errors.identity?.message} />
+        </div>
+        <ChipRow label="Suggestions">
+          {suggestions.map((s) => (
+            <Chip
+              key={s}
+              active={identity.trim() === s}
+              onClick={() => setValue("identity", s, { shouldValidate: true })}
+            >
+              {s}
+            </Chip>
+          ))}
+        </ChipRow>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {suggestions.map((s) => (
-          <Chip key={s} onClick={() => setValue("identity", s, { shouldValidate: true })}>
-            {s}
-          </Chip>
-        ))}
-      </div>
-      <div className="space-y-2 pt-1">
-        <Label>Color</Label>
-        <div className="flex flex-wrap gap-2.5">
+
+      <div role="group" aria-labelledby="wizard-color" className="space-y-2">
+        <GroupLabel id="wizard-color">Color</GroupLabel>
+        <div className={cn("gap-0.5", isBreak ? "flex gap-2" : "grid grid-cols-8")}>
           {palette.map((c) => (
             <button
               key={c.key}
@@ -287,18 +461,26 @@ export function StepIdentity({
               aria-label={c.label}
               aria-pressed={color === c.key}
               onClick={() => setValue("color", c.key)}
-              className={cn(
-                "h-9 w-9 rounded-full transition-transform",
-                c.bg,
-                color === c.key && "scale-110 ring-2 ring-ring ring-offset-2 ring-offset-card",
-              )}
-            />
+              className="flex aspect-square w-full max-w-11 cursor-pointer items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span
+                className={cn(
+                  "h-9 w-9 rounded-full transition-transform",
+                  c.bg,
+                  color === c.key && "scale-110 ring-2 ring-foreground ring-offset-2 ring-offset-card",
+                )}
+              />
+            </button>
           ))}
         </div>
       </div>
-      <div className="space-y-2">
-        <Label>Icon (optional)</Label>
-        <div className="grid grid-cols-8 gap-1.5">
+
+      <div role="group" aria-labelledby="wizard-icon" className="space-y-2">
+        <GroupLabel id="wizard-icon">
+          Icon
+          <Optional />
+        </GroupLabel>
+        <div className="grid grid-cols-7 gap-1">
           {WIZARD_ICONS.map((name) => {
             const IconComp = icons[name as keyof typeof icons];
             if (!IconComp) return null;
@@ -311,13 +493,13 @@ export function StepIdentity({
                 aria-pressed={active}
                 onClick={() => setValue("icon", active ? "" : name)}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl border transition-colors",
+                  "flex aspect-square cursor-pointer items-center justify-center rounded-2xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   active
                     ? "border-primary bg-accent text-foreground"
-                    : "border-border bg-secondary/40 text-muted-foreground hover:bg-accent",
+                    : "border-border/80 text-muted-foreground hover:bg-accent/60",
                 )}
               >
-                <IconComp size={18} />
+                <IconComp size={19} />
               </button>
             );
           })}

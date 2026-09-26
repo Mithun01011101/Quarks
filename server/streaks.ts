@@ -1,5 +1,5 @@
 import { addDays } from "date-fns";
-import type { Completion, Habit, MarkStatus, StreakInfo } from "@shared/schema";
+import type { Completion, DayState, Habit, MarkStatus, StreakInfo } from "@shared/schema";
 
 // Streak milestones celebrated in the UI. The /complete endpoint reports one
 // when the completion makes the current streak equal one of these.
@@ -42,6 +42,27 @@ export function isScheduled(habit: Habit, date: string): boolean {
   if (date < habit.startDate) return false;
   if (habit.pausedOn && date >= habit.pausedOn) return false;
   return habit.scheduleDays.includes(String(weekdayOf(date)));
+}
+
+/**
+ * What one calendar day looks like for a habit, as seen from `today`. A mark
+ * always wins (a rep on an off day still shows as done); an unmarked
+ * scheduled day is "due" on `today` itself and "missed" before it.
+ */
+export function dayState(
+  habit: Habit,
+  marks: Map<string, MarkStatus>,
+  date: string,
+  today: string,
+): DayState {
+  const mark = marks.get(date);
+  if (mark === "done") return "done";
+  if (mark === "skipped") return "skipped";
+  if (date < habit.startDate) return "before-start";
+  if (date > today) return "future";
+  if (!isScheduled(habit, date)) return "unscheduled";
+  if (date === today) return "due";
+  return "missed";
 }
 
 /**

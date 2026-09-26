@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { BurstCelebration } from "@/components/burst-celebration";
 import { playMilestone } from "@/lib/audio";
@@ -23,13 +23,17 @@ export function MilestoneOverlay({
   colorKey: string;
   onDone: () => void;
 }) {
+  // Keyed on the milestone only: a parent re-render (new onDone function)
+  // must not replay the chime or restart the dismiss timer.
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
   useEffect(() => {
     if (milestone === null) return;
     playMilestone();
     vibrate([30, 40, 30, 40, 60]);
-    const t = window.setTimeout(onDone, 2400);
+    const t = window.setTimeout(() => onDoneRef.current(), 2400);
     return () => window.clearTimeout(t);
-  }, [milestone, onDone]);
+  }, [milestone]);
 
   return (
     <AnimatePresence>

@@ -11,12 +11,15 @@
 import { HABIT_KINDS, type HabitKind } from "../shared/schema";
 import {
   IDENTITY_PREFIX,
+  cueLabel,
+  daysShort,
   habitSentence,
   identityClause,
   kindCopy,
   midSentence,
   placeParts,
 } from "../client/src/lib/sentence";
+import { LOCATION_SUGGESTIONS } from "../client/src/lib/presets";
 
 let failures = 0;
 
@@ -81,6 +84,13 @@ expect(
 expect("place: plain noun takes 'in the'", placeParts("Kitchen"), { prep: "in", place: "the kitchen" });
 expect("place: furniture takes 'on the'", placeParts("Couch"), { prep: "on", place: "the couch" });
 expect("place: institution takes 'at'", placeParts("Work"), { prep: "at", place: "work" });
+expect("place: a desk takes 'at the' (not 'in the desk')", placeParts("Desk"), { prep: "at", place: "the desk" });
+expect("place: the gym takes 'at the'", placeParts("Gym"), { prep: "at", place: "the gym" });
+for (const chip of LOCATION_SUGGESTIONS) {
+  const parts = placeParts(chip);
+  const phrase = parts ? `${parts.prep} ${parts.place}`.trim() : "";
+  check(`place chip "${chip}" reads as a phrase`, phrase.length > 0 && !/\bin the (desk|gym|table)\b/.test(phrase), phrase);
+}
 expect("place: 'outside' takes no preposition", placeParts("Outside"), { prep: "", place: "outside" });
 expect("place: existing article kept", placeParts("my desk"), { prep: "in", place: "my desk" });
 expect("place: empty is null", placeParts("   "), null);
@@ -108,6 +118,23 @@ expect(
   }),
   "No takeaway, on Mon, Tue, Wed, Thu, Fri, so I can become the type of person who cooks at home.",
 );
+
+// ---- short labels for compact rows ----
+expect("days: all seven", daysShort("0123456"), "Every day");
+expect("days: empty means every day (schema default)", daysShort(""), "Every day");
+expect("days: weekdays collapse to a range", daysShort("12345"), "Mon–Fri");
+expect("days: weekend stays together, Sat first", daysShort("06"), "Sat, Sun");
+expect("days: scattered days listed", daysShort("135"), "Mon, Wed, Fri");
+expect("days: range plus a stray day", daysShort("01234"), "Mon–Thu, Sun");
+expect("cue: time and place", cueLabel({ kind: "build", time: "21:00", location: "bed" }), "9 pm · on the bed");
+expect("cue: any time, no place", cueLabel({ kind: "build", time: null, location: null }), "Any time");
+expect("cue: place without preposition", cueLabel({ kind: "build", time: "07:30", location: "Outside" }), "7:30 am · outside");
+expect("cue: break habit shows its days", cueLabel({ kind: "break", scheduleDays: "12345" }), "Mon–Fri");
+for (const kind of HABIT_KINDS satisfies readonly HabitKind[]) {
+  const cue = cueLabel({ kind, time: "08:00", location: "Kitchen", scheduleDays: "0123456" });
+  check(`${kind}: cue label starts with a capital or digit`, /^[A-Z0-9]/.test(cue), cue);
+  check(`${kind}: cue label has no double spaces`, !cue.includes("  "), cue);
+}
 
 // ---- helpers ----
 expect("identity clause always leads in", identityClause("reads every day"), `${IDENTITY_PREFIX} reads every day`);
