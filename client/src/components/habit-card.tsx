@@ -101,7 +101,8 @@ export function HabitCard({
         type="button"
         aria-label={label}
         className={cn(
-          "relative flex min-h-[156px] w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[78px] border px-8 py-4 text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          // 200px tall with 80px corners: the pre-redesign pebble size (owner's choice).
+          "relative flex min-h-[200px] w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[80px] border px-8 py-8 text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           done ? "border-q-done-border bg-q-done" : "border-border/80 bg-card",
           atRisk && "border-2 border-dashed border-q-amber-line",
         )}

@@ -13,7 +13,8 @@ import { cueLabel, daysShort } from "@/lib/sentence";
 import { cn } from "@/lib/utils";
 
 /**
- * compact — a to-do habit in Compact view (72px: icon, name, cue, badge)
+ * compact — a to-do habit in Compact view (66px with a 44px circle — the
+ *           pre-redesign compact size, owner's choice: icon, name, cue, badge)
  * done    — the slim row in the Done list (hold to undo)
  * skipped — skipped for the day (no hold; tap for options)
  * offday  — not scheduled that day (can still be held to log a bonus rep)
@@ -42,8 +43,8 @@ export function HabitRow({
   const skipped = habit.status === "skipped";
   const big = variant === "compact";
   const atRisk = big && habit.streak.atRisk && !done;
-  const disc = big ? 48 : 40;
-  const discLeft = big ? 12 : 10;
+  const disc = big ? 44 : 40;
+  const discLeft = 10; // centres the disc in the row's rounded end
   const Icon = habit.icon ? icons[habit.icon as keyof typeof icons] : null;
 
   const [burstSeed, setBurstSeed] = useState<number | null>(null);
@@ -74,9 +75,9 @@ export function HabitRow({
   });
 
   const glyph = Icon ? (
-    <Icon size={big ? 20 : 18} strokeWidth={2} aria-hidden />
+    <Icon size={18} strokeWidth={2} aria-hidden />
   ) : (
-    <span className={cn("font-display", big ? "text-lg" : "text-base")}>
+    <span className="font-display text-base">
       {habit.name.slice(0, 1).toUpperCase()}
     </span>
   );
@@ -124,7 +125,7 @@ export function HabitRow({
       </span>
     );
   } else {
-    trailing = <BoltBadge count={habit.totalReps} size={big ? "md" : "sm"} />;
+    trailing = <BoltBadge count={habit.totalReps} size="sm" />;
   }
 
   const reps = `${habit.totalReps} ${habit.totalReps === 1 ? "rep" : "reps"}`;
@@ -157,7 +158,7 @@ export function HabitRow({
         aria-label={label}
         className={cn(
           "relative flex w-full items-center overflow-hidden border text-left select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          big ? "h-[72px] gap-3.5 rounded-[36px] pr-3.5" : "h-[60px] gap-3 rounded-[30px] pr-3",
+          big ? "h-[66px] gap-3 rounded-[33px] pr-3.5" : "h-[60px] gap-3 rounded-[30px] pr-3",
           done
             ? "border-q-done-border bg-q-done"
             : skipped
@@ -211,8 +212,7 @@ export function HabitRow({
         <span className="relative z-[5] flex min-w-0 flex-1 flex-col gap-0.5">
           <span
             className={cn(
-              "truncate font-display",
-              big ? "text-xl leading-6" : "text-lg leading-[22px]",
+              "truncate font-display text-lg leading-[22px]",
               (variant === "offday" || skipped) && !done && "text-muted-foreground",
             )}
           >
