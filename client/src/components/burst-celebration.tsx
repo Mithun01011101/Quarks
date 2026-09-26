@@ -1,6 +1,15 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { quarkHsl } from "@/lib/colors";
+
+/** Same habit + same day = same burst shape. */
+export function burstSeedFor(habitId: number): number {
+  const now = new Date();
+  const dayOfYear = Math.floor(
+    (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86_400_000,
+  );
+  return habitId * 10007 + dayOfYear;
+}
 
 function mulberry32(seed: number) {
   let t = seed >>> 0;
@@ -68,10 +77,13 @@ export function BurstCelebration({
 
   const lifespan = variant === "milestone" ? 1500 : 1000;
 
+  // Parents pass an inline onDone; a re-render must not restart the timer.
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
   useEffect(() => {
-    const t = window.setTimeout(onDone, reduced ? 400 : lifespan);
+    const t = window.setTimeout(() => onDoneRef.current(), reduced ? 400 : lifespan);
     return () => window.clearTimeout(t);
-  }, [onDone, lifespan, reduced]);
+  }, [lifespan, reduced]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20" aria-hidden>

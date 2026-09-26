@@ -23,6 +23,33 @@ export function daysPhrase(scheduleDays?: string | null): string {
   return "on " + days.split("").map((d) => DAY_SHORT[Number(d)]).join(", ");
 }
 
+// Monday-first so a Sat + Sun schedule reads as one weekend, not "Sun, Sat".
+const WEEK_MON_FIRST = [1, 2, 3, 4, 5, 6, 0];
+
+/**
+ * Compact schedule label for rows and summaries: "Every day", "Mon–Fri",
+ * "Mon, Wed, Fri", "Sat, Sun". Runs of three or more days become a range.
+ */
+export function daysShort(scheduleDays?: string | null): string {
+  const set = new Set((scheduleDays ?? "").trim().split(""));
+  const days = WEEK_MON_FIRST.filter((d) => set.has(String(d)));
+  if (days.length === 0 || days.length === 7) return "Every day";
+  const runs: number[][] = [];
+  for (const d of days) {
+    const run = runs[runs.length - 1];
+    const prev = run?.[run.length - 1];
+    if (run && WEEK_MON_FIRST.indexOf(d) === WEEK_MON_FIRST.indexOf(prev!) + 1) run.push(d);
+    else runs.push([d]);
+  }
+  return runs
+    .map((run) =>
+      run.length >= 3
+        ? `${DAY_SHORT[run[0]]}–${DAY_SHORT[run[run.length - 1]]}`
+        : run.map((d) => DAY_SHORT[d]).join(", "),
+    )
+    .join(", ");
+}
+
 /**
  * Fragments typed into the wizard land mid-sentence ("I will Read 1 chapter"),
  * so drop a leading capital. ALL-CAPS stays — it's deliberate ("NOF", "GYM").
@@ -35,11 +62,14 @@ export function midSentence(text: string): string {
 }
 
 const AT_PLACES = new Set(["home", "work", "school", "church", "uni", "university"]);
+// You sit AT a desk and train AT the gym — "in the desk" was a real bug.
+const AT_THE_PLACES = new Set(["desk", "table", "gym", "office", "park", "library", "beach", "pool"]);
 const ON_PLACES = new Set(["couch", "sofa", "bed", "porch", "balcony", "mat", "treadmill"]);
 
 /**
  * Places need the right preposition and article: "in the kitchen", "at work",
- * "on the couch", "outside" — not "in kitchen" / "in couch" / "in outside".
+ * "at the desk", "on the couch", "outside" — not "in kitchen" / "in the desk" /
+ * "in couch" / "in outside".
  */
 export function placeParts(location?: string | null): { prep: string; place: string } | null {
   const raw = location?.trim();
@@ -47,6 +77,7 @@ export function placeParts(location?: string | null): { prep: string; place: str
   const l = raw.toLowerCase();
   if (l === "outside" || l === "anywhere") return { prep: "", place: l };
   if (AT_PLACES.has(l)) return { prep: "at", place: l };
+  if (AT_THE_PLACES.has(l)) return { prep: "at", place: `the ${l}` };
   if (ON_PLACES.has(l)) return { prep: "on", place: `the ${l}` };
   // Already carries its own article/possessive ("my desk", "the gym").
   if (/^(the|my|our|a|an)\s/.test(l)) return { prep: "in", place: l };
@@ -83,6 +114,34 @@ export const KIND_COPY: Record<HabitKind, { cardIntro: string; holdLabel: string
 /** Runtime-safe lookup — a row written by an older build falls back to "build". */
 export function kindCopy(kind?: HabitKind | null): (typeof KIND_COPY)[HabitKind] {
   return (kind && KIND_COPY[kind]) || KIND_COPY.build;
+}
+
+/**
+ * The one-line cue under a habit's name in compact rows: "9 pm · on the bed",
+ * "Any time · in the kitchen", "7:30 am". Break habits have no time or place,
+ * so they show their days ("Every day", "Mon–Fri") instead.
+ */
+export function cueLabel(h: {
+  kind?: HabitKind | null;
+  time?: string | null;
+  location?: string | null;
+  scheduleDays?: string | null;
+}): string {
+  const kind: HabitKind = h.kind ?? "build";
+  switch (kind) {
+    case "break":
+      return daysShort(h.scheduleDays);
+    case "build": {
+      const when = h.time ? formatTime12(h.time) : "Any time";
+      const parts = placeParts(h.location);
+      if (!parts) return when;
+      return `${when} · ${parts.prep ? `${parts.prep} ${parts.place}` : parts.place}`;
+    }
+    default: {
+      const unhandled: never = kind;
+      throw new Error(`No cue label written for habit kind: ${String(unhandled)}`);
+    }
+  }
 }
 
 export function habitSentence(h: {

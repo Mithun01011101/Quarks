@@ -20,6 +20,7 @@ import {
   completionRate30d,
   computeStreak,
   countReps,
+  dayState,
   isScheduled,
   marksFor,
   weekdayOf,
@@ -95,12 +96,18 @@ function toTodayHabit(
   const rows = completionsByHabit.get(habit.id) ?? [];
   const marks = marksFor(rows);
   const status = marks.get(date) ?? null;
+  const recent: TodayHabit["recent"] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = addDaysStr(date, -i);
+    recent.push({ date: d, state: dayState(habit, marks, d, date) });
+  }
   return {
     ...habit,
     scheduledToday: isScheduled(habit, date),
     status,
     streak: computeStreak(habit, marks, date),
     totalReps: countReps(rows),
+    recent,
   };
 }
 
@@ -341,16 +348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const days: { date: string; state: DayState }[] = [];
       let d = `${month}-01`;
       while (d.startsWith(month)) {
-        const mark = marks.get(d);
-        let state: DayState;
-        if (mark === "done") state = "done";
-        else if (mark === "skipped") state = "skipped";
-        else if (d < habit.startDate) state = "before-start";
-        else if (d > today) state = "future";
-        else if (!isScheduled(habit, d)) state = "unscheduled";
-        else if (d === today) state = "due";
-        else state = "missed";
-        days.push({ date: d, state });
+        days.push({ date: d, state: dayState(habit, marks, d, today) });
         d = addDaysStr(d, 1);
       }
 
@@ -514,6 +512,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const d = addDaysStr(today, -i);
         let done = 0;
         let scheduled = 0;
+        let scheduledDone = 0;
+        let scheduledSkipped = 0;
         for (const habit of allHabits) {
           const marks = marksFor(completionsByHabit.get(habit.id) ?? []);
           const mark = marks.get(d);
@@ -521,10 +521,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (isScheduled(habit, d)) {
             scheduled += 1;
             if (mark === "done") {
+              scheduledDone += 1;
               aggDone += 1;
               aggDenom += 1;
             } else if (mark === "skipped") {
-              // excused
+              scheduledSkipped += 1; // excused
             } else if (d === today) {
               // in progress
             } else {
@@ -532,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
         }
-        last30.push({ date: d, done, scheduled });
+        last30.push({ date: d, done, scheduled, scheduledDone, scheduledSkipped });
       }
 
       const focusSessionsAll = await storage.getFocusSessions();

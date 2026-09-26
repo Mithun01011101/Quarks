@@ -178,81 +178,98 @@ export function FocusSession({
   const progress = 1 - remaining / totalSeconds;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-background px-6">
-      <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-        {finished ? "Session complete" : paused ? "Paused" : "Focusing on"}
-      </p>
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-background px-6"
+      style={{
+        paddingTop: "max(env(safe-area-inset-top), 24px)",
+        paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
+      }}
+    >
+      <div className="flex flex-1 flex-col items-center justify-center gap-8">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          {finished ? "Session complete" : paused ? "Paused" : "Focusing on"}
+        </p>
 
-      <div className="relative">
-        <motion.svg
-          width={R * 2 + 20}
-          height={R * 2 + 20}
-          viewBox={`0 0 ${R * 2 + 20} ${R * 2 + 20}`}
-          animate={
-            finished || paused ? { scale: 1 } : { scale: [1, 1.02, 1] }
-          }
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <circle
-            cx={R + 10}
-            cy={R + 10}
-            r={R}
-            fill="none"
-            stroke={quarkHsl(habit.color, 0.15)}
-            strokeWidth={6}
-          />
-          <circle
-            cx={R + 10}
-            cy={R + 10}
-            r={R}
-            fill="none"
-            stroke={quarkHsl(habit.color, 0.9)}
-            strokeWidth={6}
-            strokeLinecap="round"
-            strokeDasharray={CIRCUMFERENCE}
-            strokeDashoffset={CIRCUMFERENCE * (1 - progress)}
-            transform={`rotate(-90 ${R + 10} ${R + 10})`}
-          />
-        </motion.svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-5xl font-medium tabular-nums">{mmss(remaining)}</p>
-          <p className="pt-1 text-sm text-muted-foreground">{habit.name}</p>
+        <div className="relative">
+          <motion.svg
+            width={R * 2 + 20}
+            height={R * 2 + 20}
+            viewBox={`0 0 ${R * 2 + 20} ${R * 2 + 20}`}
+            animate={
+              finished || paused ? { scale: 1 } : { scale: [1, 1.02, 1] }
+            }
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <circle
+              cx={R + 10}
+              cy={R + 10}
+              r={R}
+              fill="none"
+              stroke={quarkHsl(habit.color, 0.15)}
+              strokeWidth={6}
+            />
+            <circle
+              cx={R + 10}
+              cy={R + 10}
+              r={R}
+              fill="none"
+              stroke={quarkHsl(habit.color, 0.9)}
+              strokeWidth={6}
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={CIRCUMFERENCE * (1 - progress)}
+              transform={`rotate(-90 ${R + 10} ${R + 10})`}
+            />
+          </motion.svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <p className="text-5xl font-medium tabular-nums">{mmss(remaining)}</p>
+            <p className="pt-1 text-sm text-muted-foreground">{habit.name}</p>
+          </div>
         </div>
+
+        <p className="max-w-xs text-center font-display text-[15px] italic leading-snug text-foreground/80">
+          “{habitSentence(habit)}”
+        </p>
       </div>
 
-      <p className="max-w-xs text-center font-display text-sm italic leading-snug text-foreground/70">
-        “{habitSentence(habit)}”
-      </p>
-
-      {!finished && (
-        <>
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" size="icon" onClick={togglePause} aria-label={paused ? "Resume" : "Pause"}>
-              {paused ? <Play /> : <Pause />}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (remaining <= 0) return;
-                setConfirmEnd(true);
-              }}
-            >
-              <X /> End session
-            </Button>
-          </div>
-          {habit.status !== "done" && (
-            <label className="flex items-center gap-2.5 text-sm text-muted-foreground">
-              <Switch checked={autoLog} onCheckedChange={setAutoLog} />
-              Log {habit.name} when finished
-            </label>
-          )}
-        </>
-      )}
-      {finished && (
-        <p className="font-display text-base italic text-q-sage">
-          {autoLog && habit.status !== "done" ? `${habit.name} logged.` : "Well held."}
-        </p>
-      )}
+      {/* Controls sit at the bottom, within thumb reach. */}
+      <div className="flex min-h-[124px] flex-col items-center justify-end gap-3">
+        {!finished && (
+          <>
+            {habit.status !== "done" && (
+              <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-muted-foreground">
+                <Switch checked={autoLog} onCheckedChange={setAutoLog} />
+                Log {habit.name} when finished
+              </label>
+            )}
+            <div className="flex w-full max-w-sm items-center gap-3">
+              <Button
+                variant="secondary"
+                className="h-[52px] w-[52px] shrink-0 px-0"
+                onClick={togglePause}
+                aria-label={paused ? "Resume" : "Pause"}
+              >
+                {paused ? <Play /> : <Pause />}
+              </Button>
+              <Button
+                variant="outline"
+                className="h-[52px] flex-1 text-[15px]"
+                onClick={() => {
+                  if (remaining <= 0) return;
+                  setConfirmEnd(true);
+                }}
+              >
+                <X /> End session
+              </Button>
+            </div>
+          </>
+        )}
+        {finished && (
+          <p className="pb-4 font-display text-lg italic">
+            {autoLog && habit.status !== "done" ? `${habit.name} logged.` : "Well held."}
+          </p>
+        )}
+      </div>
 
       <AlertDialog open={confirmEnd} onOpenChange={setConfirmEnd}>
         <AlertDialogContent>

@@ -3,7 +3,7 @@
  * Run: npx tsx scripts/check-streaks.ts   (exits 1 on any failure)
  */
 import type { Habit, MarkStatus } from "../shared/schema";
-import { addDaysStr, completionRate30d, computeStreak } from "../server/streaks";
+import { addDaysStr, completionRate30d, computeStreak, dayState } from "../server/streaks";
 
 let failures = 0;
 
@@ -190,6 +190,44 @@ function expect(name: string, actual: unknown, expected: unknown) {
   const noF = habit({ startDate: "2026-07-24" });
   const s = computeStreak(noF, m, "2026-08-01");
   expect("alternating done/miss is not a streak", [s.current, s.longest], [1, 2]);
+}
+
+// 14. dayState — what the calendar and the habit sheet's 7-day strip show.
+//     Weekday habit (Mon-Fri) started Wed Jul 1 2026; today is Tue Jul 7.
+{
+  const weekdays = habit({ scheduleDays: "12345" });
+  const m = marks({
+    "2026-07-01": "done", // Wed
+    "2026-07-03": "skipped", // Fri
+    "2026-07-04": "done", // Sat: an off-day rep still reads as done
+  });
+  const today = "2026-07-07";
+  const states = [
+    "2026-06-30", // before start
+    "2026-07-01", // done
+    "2026-07-02", // Thu, unmarked -> missed
+    "2026-07-03", // skipped
+    "2026-07-04", // Sat done
+    "2026-07-05", // Sun, off day
+    "2026-07-07", // today, unmarked
+    "2026-07-08", // tomorrow
+  ].map((d) => dayState(weekdays, m, d, today));
+  expect("dayState covers every case", states, [
+    "before-start",
+    "done",
+    "missed",
+    "skipped",
+    "done",
+    "unscheduled",
+    "due",
+    "future",
+  ]);
+  const paused = habit({ pausedOn: "2026-07-06" });
+  expect(
+    "dayState: paused days read as off days, not misses",
+    dayState(paused, marks({}), "2026-07-06", today),
+    "unscheduled",
+  );
 }
 
 console.log("");

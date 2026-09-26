@@ -3,39 +3,51 @@
 @tailwind utilities;
 
 /* Quarks follows the real Atoms look: warm eggshell light theme by default,
-   ink dark theme via .dark. shadcn tokens are hsl()-wrapped; habit colors
-   (--q-*) are BARE HSL triples so Tailwind `/ <alpha-value>` works — keep
-   the format. --charcoal is the "suggestion card" surface used in BOTH themes. */
+   ink dark theme via .dark. EVERY color token here is a BARE HSL triple
+   ("47 27% 92%") mapped in tailwind.config as hsl(var(--x) / <alpha-value>),
+   so opacity modifiers like bg-card/80 work — an hsl()-wrapped token makes
+   Tailwind silently drop those classes. Keep the format; in raw CSS/inline
+   styles write hsl(var(--x)). --charcoal is the "suggestion card" surface
+   used in BOTH themes. */
 :root {
   color-scheme: light;
-  --background: hsl(47, 27%, 92%);
-  --foreground: hsl(42, 10%, 10%);
-  --card: hsl(48, 45%, 98%);
-  --card-foreground: hsl(42, 10%, 10%);
-  --popover: hsl(48, 45%, 98%);
-  --popover-foreground: hsl(42, 10%, 10%);
-  --primary: hsl(42, 10%, 11%);
-  --primary-foreground: hsl(48, 45%, 97%);
-  --secondary: hsl(46, 22%, 88%);
-  --secondary-foreground: hsl(42, 10%, 12%);
-  --muted: hsl(46, 22%, 88%);
-  --muted-foreground: hsl(42, 7%, 44%);
-  --accent: hsl(46, 25%, 85%);
-  --accent-foreground: hsl(42, 10%, 12%);
-  --destructive: hsl(4, 66%, 46%);
-  --destructive-foreground: hsl(48, 45%, 97%);
-  --border: hsl(45, 16%, 84%);
-  --input: hsl(45, 16%, 80%);
-  --ring: hsl(42, 10%, 25%);
+  --background: 47 27% 92%;
+  --foreground: 42 10% 10%;
+  --card: 48 45% 98%;
+  --card-foreground: 42 10% 10%;
+  --popover: 48 45% 98%;
+  --popover-foreground: 42 10% 10%;
+  --primary: 42 10% 11%;
+  --primary-foreground: 48 45% 97%;
+  --secondary: 46 22% 88%;
+  --secondary-foreground: 42 10% 12%;
+  --muted: 46 22% 88%;
+  /* Darkened for sunlight: >= 4.5:1 on the page, cards and the done tint */
+  --muted-foreground: 42 8% 36%;
+  --accent: 46 25% 85%;
+  --accent-foreground: 42 10% 12%;
+  --destructive: 4 66% 46%;
+  --destructive-foreground: 48 45% 97%;
+  --border: 45 16% 84%;
+  --input: 45 16% 80%;
+  --ring: 42 10% 25%;
   --radius: 1.25rem;
 
   /* Dark panel used for suggestion/milestone moments in both themes */
-  --charcoal: hsl(40, 6%, 12%);
-  --charcoal-foreground: hsl(45, 30%, 94%);
+  --charcoal: 40 6% 12%;
+  --charcoal-foreground: 45 30% 94%;
 
-  /* Flame gradient (repetition badge) */
-  --flame-a: 38 93% 62%;
-  --flame-b: 25 93% 53%;
+  /* Repetition badge gradient — a mellow yellow (was orange). Always carries
+     dark ink text (--bolt-ink, 12:1), in both themes. */
+  --flame-a: 47 88% 70%;
+  --flame-b: 43 84% 58%;
+  --bolt-ink: 42 10% 10%;
+
+  /* "Don't miss twice": deep amber text on a pale amber chip, dashed amber
+     outline on the card. Text is 6:1 — the old gold was 2:1 in daylight. */
+  --q-amber: 34 78% 30%;
+  --q-amber-soft: 43 70% 88%;
+  --q-amber-line: 41 72% 46%;
 
   /* The 8 habit colors — tuned to pop on eggshell AND hold up on ink */
   --q-ember: 25 82% 55%;
@@ -59,29 +71,33 @@
 
 .dark {
   color-scheme: dark;
-  --background: hsl(26, 12%, 7%);
-  --foreground: hsl(40, 30%, 88%);
-  --card: hsl(28, 11%, 10%);
-  --card-foreground: hsl(40, 30%, 88%);
-  --popover: hsl(28, 11%, 11%);
-  --popover-foreground: hsl(40, 30%, 88%);
-  --primary: hsl(40, 30%, 88%);
-  --primary-foreground: hsl(26, 12%, 8%);
-  --secondary: hsl(28, 9%, 14%);
-  --secondary-foreground: hsl(40, 30%, 88%);
-  --muted: hsl(28, 9%, 14%);
-  --muted-foreground: hsl(38, 12%, 62%);
-  --accent: hsl(30, 10%, 16%);
-  --accent-foreground: hsl(40, 30%, 90%);
-  --destructive: hsl(4, 60%, 50%);
-  --destructive-foreground: hsl(40, 30%, 92%);
-  --border: hsl(30, 9%, 17%);
-  --input: hsl(30, 9%, 19%);
-  --ring: hsl(40, 30%, 70%);
+  --background: 26 12% 7%;
+  --foreground: 40 30% 88%;
+  --card: 28 11% 10%;
+  --card-foreground: 40 30% 88%;
+  --popover: 28 11% 11%;
+  --popover-foreground: 40 30% 88%;
+  --primary: 40 30% 88%;
+  --primary-foreground: 26 12% 8%;
+  --secondary: 28 9% 14%;
+  --secondary-foreground: 40 30% 88%;
+  --muted: 28 9% 14%;
+  --muted-foreground: 38 12% 62%;
+  --accent: 30 10% 16%;
+  --accent-foreground: 40 30% 90%;
+  --destructive: 4 60% 50%;
+  --destructive-foreground: 40 30% 92%;
+  --border: 30 9% 17%;
+  --input: 30 9% 19%;
+  --ring: 40 30% 70%;
 
   /* Uniform completed pebble on ink — warm charcoal, same for every habit */
   --q-done: 34 10% 19%;
   --q-done-border: 34 9% 27%;
+
+  --q-amber: 40 80% 60%;
+  --q-amber-soft: 38 31% 17%;
+  --q-amber-line: 39 63% 44%;
 }
 
 @layer base {
@@ -91,6 +107,8 @@
 
   html {
     -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -101,9 +119,19 @@
 }
 
 @layer utilities {
-  /* Repetition badge gradient */
+  /* Repetition badge: yellow gradient, dark numbers */
   .bolt-badge {
     background-image: linear-gradient(135deg, hsl(var(--flame-a)), hsl(var(--flame-b)));
+    color: hsl(var(--bolt-ink));
+  }
+
+  /* A habit color deepened toward the text color (darker on eggshell, lighter
+     on ink) so icons in that color stay legible. Set --q-c to a habit's triple
+     var, e.g. style={{ "--q-c": "var(--q-gold)" }}. Browsers without
+     color-mix() keep the plain habit color. */
+  .q-ink {
+    color: hsl(var(--q-c));
+    color: color-mix(in oklab, hsl(var(--q-c)) 62%, hsl(var(--foreground)));
   }
 
   /* Subtle dot texture behind the Today header */

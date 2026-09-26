@@ -44,6 +44,10 @@ export function ThemeProvider({
   useEffect(() => {
     // Light is the styling default; only the .dark class flips the theme.
     document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+    // Tint the phone's browser bar / status bar to match the page.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", resolvedTheme === "dark" ? "#141210" : "#F0EEE5");
   }, [resolvedTheme]);
 
   useEffect(() => {

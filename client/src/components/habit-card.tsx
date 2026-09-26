@@ -1,73 +1,74 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useTransform } from "framer-motion";
-import { Check, MoreHorizontal, Zap } from "lucide-react";
+import { Check } from "lucide-react";
 import type { TodayHabit } from "@shared/schema";
 import { useHoldToComplete } from "@/hooks/use-hold-to-complete";
-import { BurstCelebration } from "@/components/burst-celebration";
-import { HabitCircle } from "@/components/habit-circle";
+import { BurstCelebration, burstSeedFor } from "@/components/burst-celebration";
+import { BoltBadge, RiskChip } from "@/components/badges";
 import { playComplete } from "@/lib/audio";
 import { vibrate } from "@/lib/settings";
-import { quarkColor, quarkHsl } from "@/lib/colors";
+import { quarkHsl } from "@/lib/colors";
 import { kindCopy } from "@/lib/sentence";
 import { cn } from "@/lib/utils";
 
-function dayOfYear(): number {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  return Math.floor((now.getTime() - start.getTime()) / 86_400_000);
+/** A completion that started elsewhere (the options sheet) but celebrates here. */
+export type Celebration = { seed: number; at: number };
+
+/** Only a fresh celebration plays — never a stale one on a later re-mount. */
+export function isFreshCelebration(c?: Celebration): c is Celebration {
+  return !!c && Date.now() - c.at < 600;
 }
 
-function BoltBadge({ count, small = false }: { count: number; small?: boolean }) {
-  if (count <= 0) return null;
-  return (
-    <span
-      className={cn(
-        "bolt-badge flex flex-col items-center justify-center rounded-2xl text-white shadow-sm",
-        small ? "min-w-9 flex-row gap-1 rounded-xl px-2 py-1" : "min-w-12 gap-0.5 px-3 py-2",
-      )}
-    >
-      <Zap size={small ? 12 : 15} fill="currentColor" strokeWidth={0} />
-      <span className={cn("font-semibold tabular-nums", small ? "text-xs" : "text-sm")}>
-        {count}
-      </span>
-    </span>
-  );
+/** Long names step down in size so the card keeps its pebble height. */
+function nameSize(name: string): string {
+  if (name.length > 24) return "text-[22px] leading-[26px]";
+  if (name.length > 16) return "text-[26px] leading-[30px]";
+  return "text-[30px] leading-[34px]";
+}
+
+function sentenceCase(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 /**
- * The Today habit card — a big soft squircle you press and hold anywhere to
- * complete. touch-action stays pan-y so the page still scrolls; a moving
- * finger cancels the hold. Tap (or the … chip) opens the habit sheet.
+ * The Today habit card — a pebble you press and hold anywhere to complete.
+ * touch-action stays pan-y so the page still scrolls; a moving finger cancels
+ * the hold. A quick tap opens the habit's options sheet.
  */
 export function HabitCard({
   habit,
   onToggle,
   onTap,
-  compact = false,
+  celebrate,
 }: {
   habit: TodayHabit;
   onToggle: (habit: TodayHabit) => void;
   onTap: (habit: TodayHabit) => void;
-  compact?: boolean;
+  celebrate?: Celebration;
 }) {
-  const color = quarkColor(habit.color);
   const done = habit.status === "done";
-  const skipped = habit.status === "skipped";
   const atRisk = habit.streak.atRisk && !done;
+  const copy = kindCopy(habit.kind);
 
   const [burstSeed, setBurstSeed] = useState<number | null>(null);
   const [pop, setPop] = useState(false);
   const suppressTap = useRef(false);
   const downAt = useRef(0);
 
+  useEffect(() => {
+    if (!isFreshCelebration(celebrate)) return;
+    setBurstSeed(celebrate.seed);
+    setPop(true);
+  }, [celebrate?.at]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const { fill, holding, handlers } = useHoldToComplete({
-    disabled: skipped,
+    disabled: habit.status === "skipped",
     onFire: () => {
       suppressTap.current = true;
       if (!done) {
         playComplete();
         vibrate(35);
-        setBurstSeed(habit.id * 10007 + dayOfYear());
+        setBurstSeed(burstSeedFor(habit.id));
         setPop(true);
       } else {
         vibrate(15);
@@ -76,32 +77,15 @@ export function HabitCard({
     },
   });
 
-  const glow = useTransform(fill, (v) => `0 0 ${Math.round(36 * v)}px ${quarkHsl(habit.color, 0.35 * v)}`);
+  const glow = useTransform(
+    fill,
+    (v) => `0 0 ${Math.round(36 * v)}px ${quarkHsl(habit.color, 0.35 * v)}`,
+  );
 
-  if (compact) {
-    return (
-      <div
-        className={cn(
-          "flex items-center gap-3 rounded-3xl border bg-card px-4 py-2.5",
-          atRisk ? "border-dashed border-q-gold/70" : "border-border/70",
-          !habit.scheduledToday && !done && "opacity-60",
-        )}
-      >
-        <HabitCircle habit={habit} size="sm" onToggle={onToggle} onTap={onTap} />
-        <button
-          type="button"
-          className="min-w-0 flex-1 cursor-pointer text-left"
-          onClick={() => onTap(habit)}
-        >
-          <p className={cn("truncate font-display text-base", done && "line-through decoration-1 opacity-60")}>
-            {habit.name}
-          </p>
-          {atRisk && <p className="text-[11px] font-medium text-q-gold">don't miss twice</p>}
-        </button>
-        <BoltBadge count={habit.totalReps} small />
-      </div>
-    );
-  }
+  const reps = `${habit.totalReps} ${habit.totalReps === 1 ? "rep" : "reps"}`;
+  const label = done
+    ? `${habit.name}, done, ${reps}. Hold to undo, or tap for options.`
+    : `${habit.name}, ${reps}${atRisk ? ", missed last time: don't miss twice" : ""}. ${sentenceCase(copy.holdLabel)}, or tap for options.`;
 
   return (
     <div className="relative">
@@ -115,23 +99,17 @@ export function HabitCard({
       )}
       <motion.button
         type="button"
-        aria-label={`${habit.name} — ${done ? "hold to undo" : kindCopy(habit.kind).holdLabel}`}
+        aria-label={label}
         className={cn(
-          "relative block w-full overflow-hidden rounded-[5rem] border text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          done ? "border-transparent" : "border-border/70 bg-card shadow-sm",
-          atRisk && "border-2 border-dashed border-q-gold/80",
-          skipped && "border-dashed opacity-70",
-          !habit.scheduledToday && !done && "opacity-60",
+          "relative flex min-h-[156px] w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[78px] border px-8 py-4 text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          done ? "border-q-done-border bg-q-done" : "border-border/80 bg-card",
+          atRisk && "border-2 border-dashed border-q-amber-line",
         )}
         style={{
           touchAction: "pan-y",
           WebkitUserSelect: "none",
           userSelect: "none",
           WebkitTouchCallout: "none",
-          // Completed = ONE uniform calm pebble for every habit (round 3), not
-          // a per-habit tint. Theme-aware via the --q-done token.
-          backgroundColor: done ? "hsl(var(--q-done))" : undefined,
-          borderColor: done ? "hsl(var(--q-done-border))" : undefined,
           boxShadow: glow as unknown as string,
         }}
         animate={{ scale: holding ? 0.98 : pop ? [0.92, 1.12, 0.97, 1.03, 1] : 1 }}
@@ -153,6 +131,8 @@ export function HabitCard({
           }
           const pressedAt = downAt.current;
           downAt.current = 0;
+          // A press longer than a tap was an abandoned hold, not a tap.
+          // pressedAt === 0 means keyboard/assistive activation — always a tap.
           if (pressedAt !== 0 && Date.now() - pressedAt > 320) return;
           onTap(habit);
         }}
@@ -164,54 +144,28 @@ export function HabitCard({
           style={{ backgroundColor: quarkHsl(habit.color, 0.9), scale: fill }}
         />
 
-        {/* … chip (opens the sheet without starting a hold) */}
-        <span
-          role="button"
-          aria-label={`${habit.name} options`}
-          tabIndex={-1}
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            onTap(habit);
-          }}
-          className="absolute left-1/2 top-4 z-10 flex h-7 w-11 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full bg-secondary text-muted-foreground"
-        >
-          <MoreHorizontal size={16} />
-        </span>
-
-        {/* repetition badge */}
-        <span className="absolute right-4 top-4 z-10">
-          <BoltBadge count={habit.totalReps} />
-        </span>
-
-        <span className="relative z-[5] flex min-h-[200px] flex-col items-center justify-center gap-2 px-8 py-12">
+        <span className="relative z-[5] flex items-center gap-1.5">
           {done && (
-            <Check
-              size={30}
-              strokeWidth={3}
-              className="mb-1"
-              style={{ color: "hsl(var(--foreground))" }}
-            />
-          )}
-          {skipped && (
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Skipped today
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-background">
+              <Check size={15} strokeWidth={3} aria-hidden />
             </span>
           )}
-          <span className="font-display text-3xl leading-tight">
-            {habit.name}
-          </span>
-          <span className="pt-1 text-xs text-muted-foreground">
-            {kindCopy(habit.kind).cardIntro}
-          </span>
-          <span className="font-display text-lg leading-snug text-foreground/90">
+          <BoltBadge count={habit.totalReps} />
+          {atRisk && <RiskChip />}
+        </span>
+        <span
+          className={cn(
+            "relative z-[5] line-clamp-2 font-display tracking-[-0.01em]",
+            nameSize(habit.name),
+          )}
+        >
+          {habit.name}
+        </span>
+        <span className="relative z-[5] flex flex-col items-center gap-0.5">
+          <span className="text-xs text-muted-foreground">{copy.cardIntro}</span>
+          <span className="line-clamp-2 font-display text-[17px] leading-[22px]">
             {habit.identity}
           </span>
-          {atRisk && (
-            <span className="pt-2 text-[11px] font-semibold uppercase tracking-wide text-q-gold">
-              Don't miss twice
-            </span>
-          )}
         </span>
       </motion.button>
     </div>

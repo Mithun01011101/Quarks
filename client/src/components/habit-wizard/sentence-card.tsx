@@ -1,38 +1,25 @@
-import { RefreshCw } from "lucide-react";
 import type { HabitKind } from "@shared/schema";
 import { daysPhrase, formatTime12, IDENTITY_PREFIX, midSentence, placeParts } from "@/lib/sentence";
 import { quarkHsl } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 
-function NumChip({ n }: { n: string }) {
-  return (
-    <span
-      className="bolt-badge mx-0.5 inline-flex h-5 w-6 -translate-y-px items-center justify-center rounded-md align-middle text-[10px] font-bold text-white"
-      aria-hidden
-    >
-      {n}
-    </span>
-  );
-}
-
 function Slot({ value, placeholder }: { value: string | null; placeholder: string }) {
   if (value) {
     return (
-      <span className="font-medium text-foreground underline decoration-q-ember/60 decoration-2 underline-offset-4">
-        {value}
-      </span>
+      <span className="underline decoration-bolt decoration-2 underline-offset-4">{value}</span>
     );
   }
   return (
-    <span className="border-b-2 border-dotted border-muted-foreground/50 px-0.5 text-muted-foreground">
+    <span className="text-muted-foreground underline decoration-muted-foreground/60 decoration-dotted decoration-2 underline-offset-4">
       {placeholder}
     </span>
   );
 }
 
 /**
- * The sticky implementation-intention card. It stays visible across wizard
- * steps so the sentence visibly assembles as each numbered answer lands.
+ * The live implementation-intention preview at the top of the wizard. It
+ * assembles as each step lands, and shrinks to two lines while the keyboard
+ * is up so the field being typed in stays visible.
  */
 export function SentenceCard({
   name,
@@ -45,7 +32,7 @@ export function SentenceCard({
   scheduleDays,
   identity,
   color,
-  onShuffle,
+  compact = false,
 }: {
   name: string;
   kind: HabitKind;
@@ -57,50 +44,45 @@ export function SentenceCard({
   scheduleDays: string;
   identity: string;
   color: string;
-  onShuffle?: () => void;
+  compact?: boolean;
 }) {
   const typed = tinyVersion.trim() || action.trim();
   const what = typed ? midSentence(typed) : null;
   const when = anytime ? "any time" : time ? formatTime12(time) : null;
   const where = placeParts(location);
+  const who = identity.trim() ? midSentence(identity) : null;
 
   return (
-    <div
-      className={cn("rounded-2xl border bg-card px-4 pb-3 pt-4 shadow-sm")}
+    <p
+      aria-label="Preview"
+      className={cn(
+        "rounded-2xl border px-3.5 py-2.5 font-display text-[15px] leading-[21px] text-foreground/90",
+        compact && "py-2",
+      )}
       style={{ borderColor: quarkHsl(color, 0.45) }}
     >
-      {kind === "break" ? (
-        <p className="font-display text-[17px] leading-[1.9] text-foreground/90">
-          <NumChip n="01" /> <Slot value={name.trim() || null} placeholder="the habit to break" />,{" "}
-          <NumChip n="02" /> <Slot value={daysPhrase(scheduleDays)} placeholder="every day" />, so I
-          can become {IDENTITY_PREFIX} <NumChip n="03" />{" "}
-          <Slot value={identity.trim() ? midSentence(identity) : null} placeholder="…" />.
-        </p>
-      ) : (
-      <p className="font-display text-[17px] leading-[1.9] text-foreground/90">
-        I will <NumChip n="01" /> <Slot value={what} placeholder="do my habit" /> at{" "}
-        <NumChip n="02" /> <Slot value={when} placeholder="a time" />
-        {where ? (
+      {/* the clamp lives on an inner box so the padding can't show a third line */}
+      <span className={cn("block", compact && "line-clamp-2")}>
+        {kind === "break" ? (
           <>
-            {where.prep ? ` ${where.prep} ` : " "}
-            <Slot value={where.place} placeholder="a place" />
+            <Slot value={name.trim() || null} placeholder="the habit to break" />,{" "}
+            <Slot value={daysPhrase(scheduleDays)} placeholder="every day" />, so I can become{" "}
+            {IDENTITY_PREFIX} <Slot value={who} placeholder="…" />.
           </>
-        ) : null}
-        , so I can become {IDENTITY_PREFIX} <NumChip n="03" />{" "}
-        <Slot value={identity.trim() ? midSentence(identity) : null} placeholder="…" />.
-      </p>
-      )}
-      {onShuffle && (
-        <div className="flex justify-center pt-2.5">
-          <button
-            type="button"
-            onClick={onShuffle}
-            className="flex cursor-pointer items-center gap-1.5 rounded-full bg-secondary px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <RefreshCw size={12} /> Different example
-          </button>
-        </div>
-      )}
-    </div>
+        ) : (
+          <>
+            I will <Slot value={what} placeholder="do my habit" /> at{" "}
+            <Slot value={when} placeholder="a time" />
+            {where ? (
+              <>
+                {where.prep ? ` ${where.prep} ` : " "}
+                <Slot value={where.place} placeholder="a place" />
+              </>
+            ) : null}
+            , so I can become {IDENTITY_PREFIX} <Slot value={who} placeholder="…" />.
+          </>
+        )}
+      </span>
+    </p>
   );
 }
