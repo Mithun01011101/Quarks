@@ -4,6 +4,18 @@ import { registerRoutes } from "./routes";
 import { setupAuth } from "./auth";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Without these the app silently falls back to local-dev behaviour, which is
+// harmful on Render: no DATABASE_URL -> data goes to quarks.json, which Render
+// wipes on every restart/deploy/spin-down; no APP_PASSWORD -> no login gate,
+// so anyone with the URL can read and change everything. Refuse to start.
+if (process.env.NODE_ENV === "production") {
+  for (const name of ["DATABASE_URL", "APP_PASSWORD"]) {
+    if (!process.env[name]) {
+      throw new Error(`${name} is not set — refusing to start in production (set it in Render → Environment).`);
+    }
+  }
+}
+
 const app = express();
 app.set("trust proxy", 1);
 app.use(express.json());
