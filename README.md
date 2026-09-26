@@ -47,4 +47,6 @@ deployed app uses, so the PC and phone stay in sync.
 Push to `main` → Render auto-deploys via `render.yaml` (health check:
 `/healthz`). Secrets (`DATABASE_URL`, `APP_PASSWORD`) are set in the Render
 dashboard, never in git. The whole app sits behind one shared password when
-`APP_PASSWORD` is set; the gate stays off for local dev.
+`APP_PASSWORD` is set; the gate stays off for local dev. In production the
+server refuses to start if either secret is missing, rather than silently
+running without a password or saving data to a file Render throws away.
