@@ -4,11 +4,11 @@ import { Check } from "lucide-react";
 import type { TodayHabit } from "@shared/schema";
 import { useHoldToComplete } from "@/hooks/use-hold-to-complete";
 import { BurstCelebration, burstSeedFor } from "@/components/burst-celebration";
-import { BoltBadge, RiskChip } from "@/components/badges";
+import { BoltBadge } from "@/components/badges";
 import { playComplete } from "@/lib/audio";
 import { vibrate } from "@/lib/settings";
 import { quarkHsl } from "@/lib/colors";
-import { kindCopy } from "@/lib/sentence";
+import { kindCopy, streakLabel } from "@/lib/sentence";
 import { cn } from "@/lib/utils";
 
 /** A completion that started elsewhere (the options sheet) but celebrates here. */
@@ -17,13 +17,6 @@ export type Celebration = { seed: number; at: number };
 /** Only a fresh celebration plays — never a stale one on a later re-mount. */
 export function isFreshCelebration(c?: Celebration): c is Celebration {
   return !!c && Date.now() - c.at < 600;
-}
-
-/** Long names step down in size so the card keeps its pebble height. */
-function nameSize(name: string): string {
-  if (name.length > 24) return "text-[22px] leading-[26px]";
-  if (name.length > 16) return "text-[26px] leading-[30px]";
-  return "text-[30px] leading-[34px]";
 }
 
 function sentenceCase(s: string): string {
@@ -82,10 +75,10 @@ export function HabitCard({
     (v) => `0 0 ${Math.round(36 * v)}px ${quarkHsl(habit.color, 0.35 * v)}`,
   );
 
-  const reps = `${habit.totalReps} ${habit.totalReps === 1 ? "rep" : "reps"}`;
+  const streak = streakLabel(habit.streak.current);
   const label = done
-    ? `${habit.name}, done, ${reps}. Hold to undo, or tap for options.`
-    : `${habit.name}, ${reps}${atRisk ? ", missed last time: don't miss twice" : ""}. ${sentenceCase(copy.holdLabel)}, or tap for options.`;
+    ? `${habit.name}, done, ${streak}. Hold to undo, or tap for options.`
+    : `${habit.name}, ${streak}${atRisk ? ", missed last time: don't miss twice" : ""}. ${sentenceCase(copy.holdLabel)}, or tap for options.`;
 
   return (
     <div className="relative">
@@ -101,8 +94,12 @@ export function HabitCard({
         type="button"
         aria-label={label}
         className={cn(
-          // 200px tall with 80px corners: the pre-redesign pebble size (owner's choice).
-          "relative flex min-h-[200px] w-full flex-col items-center justify-center gap-1.5 overflow-hidden rounded-[80px] border px-8 py-8 text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          // Geometry is the pre-redesign card's, measured to the pixel (owner's
+          // choice): the text sits in a 200px body inside the border, so a card
+          // is 202px — 231px when at risk (2px border + the bottom "don't miss
+          // twice" line) — and taller only when its words wrap. Keep the badge
+          // row out of the flow so it never moves the text.
+          "relative block w-full overflow-hidden rounded-[80px] border text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           done ? "border-q-done-border bg-q-done" : "border-border/80 bg-card",
           atRisk && "border-2 border-dashed border-q-amber-line",
         )}
@@ -145,28 +142,25 @@ export function HabitCard({
           style={{ backgroundColor: quarkHsl(habit.color, 0.9), scale: fill }}
         />
 
-        <span className="relative z-[5] flex items-center gap-1.5">
+        {/* streak badge — in the slot the old "…" button had (top 16px, 28px tall) */}
+        <span className="absolute inset-x-0 top-4 z-10 flex justify-center gap-1.5">
           {done && (
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-background">
               <Check size={15} strokeWidth={3} aria-hidden />
             </span>
           )}
-          <BoltBadge count={habit.totalReps} />
-          {atRisk && <RiskChip />}
+          <BoltBadge count={habit.streak.current} />
         </span>
-        <span
-          className={cn(
-            "relative z-[5] line-clamp-2 font-display tracking-[-0.01em]",
-            nameSize(habit.name),
+
+        <span className="relative z-[5] flex min-h-[200px] flex-col items-center justify-center gap-2 px-8 py-12">
+          <span className="font-display text-3xl leading-tight">{habit.name}</span>
+          <span className="pt-1 text-xs text-muted-foreground">{copy.cardIntro}</span>
+          <span className="font-display text-lg leading-snug">{habit.identity}</span>
+          {atRisk && (
+            <span className="pt-2 text-[11px] font-semibold uppercase tracking-wide text-q-amber">
+              Don't miss twice
+            </span>
           )}
-        >
-          {habit.name}
-        </span>
-        <span className="relative z-[5] flex flex-col items-center gap-0.5">
-          <span className="text-xs text-muted-foreground">{copy.cardIntro}</span>
-          <span className="line-clamp-2 font-display text-[17px] leading-[22px]">
-            {habit.identity}
-          </span>
         </span>
       </motion.button>
     </div>

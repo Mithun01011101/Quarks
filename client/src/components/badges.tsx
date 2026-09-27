@@ -1,7 +1,10 @@
-import { Flame, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** The ⚡ total-reps badge — yellow gradient, dark numbers. Hidden at zero. */
+/**
+ * The ⚡ badge on habit bubbles — the habit's current streak (owner's choice
+ * over total reps). Yellow gradient, dark numbers. Hidden at zero.
+ */
 export function BoltBadge({
   count,
   size = "md",
@@ -24,21 +27,6 @@ export function BoltBadge({
     >
       <Zap size={size === "md" ? 13 : 12} fill="currentColor" strokeWidth={0} aria-hidden />
       {count}
-    </span>
-  );
-}
-
-/** "Don't miss twice" — shown when the last scheduled day was missed. */
-export function RiskChip({ className }: { className?: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex h-7 shrink-0 items-center gap-[5px] rounded-[14px] bg-q-amber-soft pl-[9px] pr-[11px] text-[13px] font-semibold text-q-amber",
-        className,
-      )}
-    >
-      <Flame size={14} strokeWidth={2.2} aria-hidden />
-      Don't miss twice
     </span>
   );
 }

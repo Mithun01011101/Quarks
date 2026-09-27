@@ -160,7 +160,11 @@ export default function TodayTab() {
             totalReps: Math.max(0, h.totalReps + (undoing ? -1 : 1)),
             streak: {
               ...h.streak,
-              current: Math.max(0, h.streak.current + (undoing ? -1 : 1)),
+              // Only scheduled days count toward a streak (server/streaks.ts);
+              // a bonus rep on an off-day leaves it as it is.
+              current: h.scheduledToday
+                ? Math.max(0, h.streak.current + (undoing ? -1 : 1))
+                : h.streak.current,
               atRisk: false,
             },
             recent: h.recent.map((r, i) =>
@@ -385,7 +389,7 @@ export default function TodayTab() {
             <div className="space-y-6">
               {/* ---- What's left: big pebbles (or compact rows) ---- */}
               {toDo.length > 0 ? (
-                <div className={cn("relative", compact ? "space-y-2" : "space-y-3")}>
+                <div className={cn("relative", compact ? "space-y-2" : "space-y-4")}>
                   <AnimatePresence initial={false} mode="popLayout">
                     {toDo.map((h) => (
                       <motion.div key={h.id} {...itemMotion}>
@@ -463,9 +467,9 @@ export default function TodayTab() {
                     {paused.map((h) => (
                       <div
                         key={h.id}
-                        className="flex h-[60px] items-center gap-3 rounded-[30px] border border-dashed border-border pl-5 pr-2"
+                        className="flex h-[66px] items-center gap-3 rounded-[24px] border border-dashed border-border px-4"
                       >
-                        <p className="min-w-0 flex-1 truncate font-display text-lg text-muted-foreground">
+                        <p className="min-w-0 flex-1 truncate font-display text-base text-muted-foreground">
                           {h.name}
                         </p>
                         <Button

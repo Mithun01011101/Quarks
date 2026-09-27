@@ -144,6 +144,11 @@ export function cueLabel(h: {
   }
 }
 
+/** Spoken form of the ⚡ streak badge on habit bubbles: "12-day streak". */
+export function streakLabel(days: number): string {
+  return days > 0 ? `${days}-day streak` : "no current streak";
+}
+
 export function habitSentence(h: {
   kind?: HabitKind | null;
   name?: string;

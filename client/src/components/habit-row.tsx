@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Flame, Minus, icons } from "lucide-react";
+import { Check, Minus, icons } from "lucide-react";
 import type { TodayHabit } from "@shared/schema";
 import { useHoldToComplete } from "@/hooks/use-hold-to-complete";
 import { BurstCelebration, burstSeedFor } from "@/components/burst-celebration";
@@ -9,21 +9,26 @@ import { isFreshCelebration, type Celebration } from "@/components/habit-card";
 import { playComplete } from "@/lib/audio";
 import { vibrate } from "@/lib/settings";
 import { quarkColor, quarkHsl, quarkInkVar } from "@/lib/colors";
-import { cueLabel, daysShort } from "@/lib/sentence";
+import { daysShort, streakLabel } from "@/lib/sentence";
 import { cn } from "@/lib/utils";
 
 /**
- * compact — a to-do habit in Compact view (66px with a 44px circle — the
- *           pre-redesign compact size, owner's choice: icon, name, cue, badge)
- * done    — the slim row in the Done list (hold to undo)
+ * compact — a to-do habit in Compact view
+ * done    — a row in the Done list (hold to undo)
  * skipped — skipped for the day (no hold; tap for options)
  * offday  — not scheduled that day (can still be held to log a bonus rep)
  */
 export type RowVariant = "compact" | "done" | "skipped" | "offday";
 
+// Every row keeps the pre-redesign compact row's geometry, measured to the
+// pixel (owner's choice): 66px tall, 24px corners, 16px side padding, a 44px
+// circle 16px in from the edge and a 16px name.
+const DISC = 44;
+const DISC_LEFT = 16;
+
 /**
- * A slim habit row. The whole row is the hold target (same 2 s hold as the
- * big card) and a quick tap opens the habit's options sheet.
+ * A habit row. The whole row is the hold target (same 2 s hold as the big
+ * card) and a quick tap opens the habit's options sheet.
  */
 export function HabitRow({
   habit,
@@ -41,10 +46,7 @@ export function HabitRow({
   const color = quarkColor(habit.color);
   const done = habit.status === "done";
   const skipped = habit.status === "skipped";
-  const big = variant === "compact";
-  const atRisk = big && habit.streak.atRisk && !done;
-  const disc = big ? 44 : 40;
-  const discLeft = 10; // centres the disc in the row's rounded end
+  const atRisk = variant === "compact" && habit.streak.atRisk && !done;
   const Icon = habit.icon ? icons[habit.icon as keyof typeof icons] : null;
 
   const [burstSeed, setBurstSeed] = useState<number | null>(null);
@@ -75,24 +77,22 @@ export function HabitRow({
   });
 
   const glyph = Icon ? (
-    <Icon size={18} strokeWidth={2} aria-hidden />
+    <Icon size={16} strokeWidth={2} aria-hidden />
   ) : (
-    <span className="font-display text-base">
-      {habit.name.slice(0, 1).toUpperCase()}
-    </span>
+    <span className="font-display text-sm">{habit.name.slice(0, 1).toUpperCase()}</span>
   );
 
   let discEl: React.ReactNode;
   if (done) {
     discEl = (
       <span className="flex h-full w-full items-center justify-center rounded-full bg-foreground text-background">
-        <Check size={18} strokeWidth={3} aria-hidden />
+        <Check size={16} strokeWidth={3} aria-hidden />
       </span>
     );
   } else if (skipped) {
     discEl = (
       <span className="flex h-full w-full items-center justify-center rounded-full bg-secondary text-muted-foreground">
-        <Minus size={18} strokeWidth={2.4} aria-hidden />
+        <Minus size={16} strokeWidth={2.4} aria-hidden />
       </span>
     );
   } else if (variant === "offday") {
@@ -125,25 +125,26 @@ export function HabitRow({
       </span>
     );
   } else {
-    trailing = <BoltBadge count={habit.totalReps} size="sm" />;
+    trailing = <BoltBadge count={habit.streak.current} size="sm" />;
   }
 
-  const reps = `${habit.totalReps} ${habit.totalReps === 1 ? "rep" : "reps"}`;
+  const streak = streakLabel(habit.streak.current);
   const label =
     variant === "skipped"
       ? `${habit.name}, skipped. Tap for options.`
       : variant === "offday"
         ? `${habit.name}, not scheduled today (${daysShort(habit.scheduleDays)})${done ? ", done" : ""}. ${done ? "Hold to undo" : "Hold to log a rep anyway"}, or tap for options.`
         : done
-          ? `${habit.name}, done, ${reps}. Hold to undo, or tap for options.`
-          : `${habit.name}, ${reps}${atRisk ? ", missed last time: don't miss twice" : ""}. Hold to complete, or tap for options.`;
+          ? `${habit.name}, done, ${streak}. Hold to undo, or tap for options.`
+          : `${habit.name}, ${streak}${atRisk ? ", missed last time: don't miss twice" : ""}. Hold to complete, or tap for options.`;
 
   return (
     <div className="relative">
       {burstSeed !== null && (
         <span
           className="pointer-events-none absolute top-1/2 z-20 -translate-y-1/2"
-          style={{ left: discLeft, width: disc, height: disc }}
+          // centred on the circle (+1 for the row's border)
+          style={{ left: DISC_LEFT + 1, width: DISC, height: DISC }}
         >
           <BurstCelebration
             colorKey={habit.color}
@@ -158,7 +159,7 @@ export function HabitRow({
         aria-label={label}
         className={cn(
           "relative flex w-full items-center overflow-hidden border text-left select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          big ? "h-[66px] gap-3 rounded-[33px] pr-3.5" : "h-[60px] gap-3 rounded-[30px] pr-3",
+          "h-[66px] gap-3 rounded-[24px] pr-4",
           done
             ? "border-q-done-border bg-q-done"
             : skipped
@@ -166,10 +167,10 @@ export function HabitRow({
               : variant === "offday"
                 ? "border-dashed border-border bg-transparent"
                 : "border-border/80 bg-card",
-          atRisk && "border-2 border-dashed border-q-amber-line",
+          atRisk && "border-dashed border-q-amber-line",
         )}
         style={{
-          paddingLeft: discLeft - (atRisk ? 1 : 0),
+          paddingLeft: DISC_LEFT,
           touchAction: "pan-y",
           WebkitUserSelect: "none",
           userSelect: "none",
@@ -201,31 +202,24 @@ export function HabitRow({
           aria-hidden
           className="pointer-events-none absolute top-1/2 aspect-square w-[240%] -translate-x-1/2 -translate-y-1/2 rounded-full"
           style={{
-            left: discLeft + disc / 2,
+            left: DISC_LEFT + DISC / 2,
             backgroundColor: quarkHsl(habit.color, 0.9),
             scale: fill,
           }}
         />
-        <span className="relative z-[5] shrink-0" style={{ width: disc, height: disc }}>
+        <span className="relative z-[5] shrink-0" style={{ width: DISC, height: DISC }}>
           {discEl}
         </span>
-        <span className="relative z-[5] flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="relative z-[5] flex min-w-0 flex-1 flex-col">
           <span
             className={cn(
-              "truncate font-display text-lg leading-[22px]",
+              "truncate font-display text-base",
               (variant === "offday" || skipped) && !done && "text-muted-foreground",
             )}
           >
             {habit.name}
           </span>
-          {big &&
-            (atRisk ? (
-              <span className="flex items-center gap-1 text-xs font-semibold text-q-amber">
-                <Flame size={13} strokeWidth={2.2} aria-hidden /> Don't miss twice
-              </span>
-            ) : (
-              <span className="truncate text-xs text-muted-foreground">{cueLabel(habit)}</span>
-            ))}
+          {atRisk && <span className="text-[11px] font-medium text-q-amber">don't miss twice</span>}
         </span>
         <span className="relative z-[5] shrink-0">{trailing}</span>
       </motion.button>

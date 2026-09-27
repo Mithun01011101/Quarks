@@ -18,6 +18,7 @@ import {
   kindCopy,
   midSentence,
   placeParts,
+  streakLabel,
 } from "../client/src/lib/sentence";
 import { LOCATION_SUGGESTIONS } from "../client/src/lib/presets";
 
@@ -126,6 +127,9 @@ expect("days: weekdays collapse to a range", daysShort("12345"), "Mon–Fri");
 expect("days: weekend stays together, Sat first", daysShort("06"), "Sat, Sun");
 expect("days: scattered days listed", daysShort("135"), "Mon, Wed, Fri");
 expect("days: range plus a stray day", daysShort("01234"), "Mon–Thu, Sun");
+expect("streak: counts days", streakLabel(12), "12-day streak");
+expect("streak: a single day", streakLabel(1), "1-day streak");
+expect("streak: none running", streakLabel(0), "no current streak");
 expect("cue: time and place", cueLabel({ kind: "build", time: "21:00", location: "bed" }), "9 pm · on the bed");
 expect("cue: any time, no place", cueLabel({ kind: "build", time: null, location: null }), "Any time");
 expect("cue: place without preposition", cueLabel({ kind: "build", time: "07:30", location: "Outside" }), "7:30 am · outside");
