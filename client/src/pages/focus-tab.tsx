@@ -17,7 +17,7 @@ function SectionLabel({ id, children }: { id?: string; children: React.ReactNode
   return (
     <p
       id={id}
-      className="px-1 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+      className="on-paper px-1 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground"
     >
       {children}
     </p>
@@ -72,7 +72,7 @@ export default function FocusTab() {
   }
 
   const header = (
-    <header className="space-y-1 px-1">
+    <header className="on-paper space-y-1 px-1">
       <h1 className="font-display text-[30px] font-medium leading-[34px] tracking-[-0.01em]">
         Focus
       </h1>

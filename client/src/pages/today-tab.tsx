@@ -304,14 +304,6 @@ export default function TodayTab() {
         <div className="space-y-5 pb-2">
           {/* ---- Header: settings, day + progress, add habit ---- */}
           <div className="relative space-y-3.5">
-            <div
-              className="dot-grid pointer-events-none absolute -inset-x-4 -top-4 h-44 text-foreground/[0.06]"
-              style={{
-                WebkitMaskImage: "linear-gradient(180deg, #000 45%, transparent)",
-                maskImage: "linear-gradient(180deg, #000 45%, transparent)",
-              }}
-              aria-hidden
-            />
             <header className="relative flex h-11 items-center gap-3">
               <button
                 type="button"
@@ -323,7 +315,7 @@ export default function TodayTab() {
                 <span className="h-[7px] w-[7px] rounded-full bg-q-gold" />
                 <span className="h-[7px] w-[7px] rounded-full bg-q-sage" />
               </button>
-              <div className="min-w-0 flex-1">
+              <div className="on-paper min-w-0 flex-1">
                 <h1 className="font-display text-[28px] font-medium leading-[30px] tracking-[-0.01em]">
                   {dayTitle(viewDate, realToday)}
                 </h1>

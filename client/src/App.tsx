@@ -31,12 +31,20 @@ export default function App() {
     <MotionConfig reducedMotion="user">
       <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col">
         <main
-          className="flex-1 overflow-x-hidden px-4 pb-32"
+          className="relative flex-1 overflow-x-hidden px-4 pb-32"
           style={{ paddingTop: "max(env(safe-area-inset-top), 16px)" }}
         >
+          {/* dotted graph paper behind every screen's header; it stays put
+              while the tabs slide over it */}
+          <div
+            aria-hidden
+            className="paper-dots pointer-events-none absolute inset-x-0 top-0"
+            style={{ height: "calc(max(env(safe-area-inset-top), 16px) + 160px)" }}
+          />
           <AnimatePresence mode="popLayout" custom={direction}>
             <motion.div
               key={tab}
+              className="relative"
               custom={direction}
               initial={{ opacity: 0, x: direction * 48 }}
               animate={{ opacity: 1, x: 0 }}

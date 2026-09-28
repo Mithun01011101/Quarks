@@ -311,7 +311,7 @@ export default function ProgressTab() {
   }
 
   const title = (
-    <h1 className="px-1 font-display text-[30px] font-medium leading-[34px] tracking-[-0.01em]">
+    <h1 className="on-paper px-1 font-display text-[30px] font-medium leading-[34px] tracking-[-0.01em]">
       Progress
     </h1>
   );

@@ -42,7 +42,7 @@ export function DayStrip({
           >
             <span
               className={cn(
-                "text-[11px] leading-[14px]",
+                "on-paper text-[11px] leading-[14px]",
                 isToday || active ? "font-bold text-foreground" : "font-medium text-muted-foreground",
               )}
             >

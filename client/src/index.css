@@ -67,10 +67,16 @@
      Bare HSL triples like the habit colors so hsl(var(--q-done) / a) works. */
   --q-done: 40 34% 84%;
   --q-done-border: 40 24% 74%;
+
+  /* Strength of the dotted graph paper (.paper-dots): full ink, as the
+     pre-redesign app showed it. */
+  --paper-dots-alpha: 1;
 }
 
 .dark {
   color-scheme: dark;
+  /* light dots on ink glare at full strength */
+  --paper-dots-alpha: 0.5;
   --background: 26 12% 7%;
   --foreground: 40 30% 88%;
   --card: 28 11% 10%;
@@ -135,9 +141,35 @@
   }
 
   /* Subtle dot texture behind the Today header */
-  .dot-grid {
+  /* Dotted graph paper behind the top of every screen — the pre-redesign
+     app's grid (1px dots every 14px), centred, fading out before the
+     content. The old build meant it at 6% but its colour tokens dropped
+     that class, so the owner knew it at full ink; keep it that way. */
+  .paper-dots {
+    color: hsl(var(--foreground) / var(--paper-dots-alpha));
     background-image: radial-gradient(currentColor 1px, transparent 1.4px);
     background-size: 14px 14px;
+    background-position: 50% 0;
+    -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent);
+    mask-image: linear-gradient(180deg, #000 45%, transparent);
+  }
+
+  /* Text that sits on the dotted paper: a 3px outline in the page colour,
+     painted UNDER the letters, clears the dots around them so small text stays
+     crisp (a soft halo where paint-order isn't supported — without it the
+     outline would be drawn over the letters). Invisible on the plain page;
+     use it only on text over the page background, never on a card or a
+     filled disc. */
+  .on-paper {
+    text-shadow:
+      0 0 4px hsl(var(--background)),
+      0 0 7px hsl(var(--background));
+  }
+  @supports (paint-order: stroke fill) {
+    .on-paper {
+      -webkit-text-stroke: 6px hsl(var(--background));
+      paint-order: stroke fill;
+    }
   }
 
   .scrollbar-hide {

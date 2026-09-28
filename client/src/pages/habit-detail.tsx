@@ -82,16 +82,16 @@ export function HabitDetailPage({
       <header className="flex h-11 items-center gap-3">
         <BackButton onClose={onClose} />
         <span className={cn("h-3 w-3 shrink-0 rounded-full", color.bg)} aria-hidden />
-        <h2 className="min-w-0 flex-1 truncate font-display text-[26px] font-medium leading-[30px]">
+        <h2 className="on-paper min-w-0 flex-1 truncate font-display text-[26px] font-medium leading-[30px]">
           {detail.habit.name}
         </h2>
       </header>
 
-      <p className="px-1 font-display text-base italic leading-[23px] text-foreground/85">
+      <p className="on-paper px-1 font-display text-base italic leading-[23px] text-foreground/85">
         “{habitSentence(detail.habit)}”
       </p>
       {detail.streak.atRisk && (
-        <p className="flex items-center gap-1.5 px-1 text-[13px] font-semibold text-q-amber">
+        <p className="on-paper flex items-center gap-1.5 px-1 text-[13px] font-semibold text-q-amber">
           <Flame size={14} strokeWidth={2.2} aria-hidden /> Missed last time — don't miss twice.
         </p>
       )}
