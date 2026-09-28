@@ -94,12 +94,12 @@ export function HabitCard({
         type="button"
         aria-label={label}
         className={cn(
-          // Geometry is the pre-redesign card's, measured to the pixel (owner's
-          // choice): the text sits in a 200px body inside the border, so a card
-          // is 202px — 231px when at risk (2px border + the bottom "don't miss
-          // twice" line) — and taller only when its words wrap. Keep the badge
-          // row out of the flow so it never moves the text.
-          "relative block w-full overflow-hidden rounded-[80px] border text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          // The pre-redesign card's layout scaled up ~20% (owner: "make the
+          // bubbles bigger"): a 240px body inside the border, so a card is
+          // 242px, taller when at risk (2px border + the bottom "don't miss
+          // twice" line) or when its words wrap. Keep the badge row out of the
+          // flow so it never moves the text.
+          "relative block w-full overflow-hidden rounded-[96px] border text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           done ? "border-q-done-border bg-q-done" : "border-border/80 bg-card",
           atRisk && "border-2 border-dashed border-q-amber-line",
         )}
@@ -142,22 +142,22 @@ export function HabitCard({
           style={{ backgroundColor: quarkHsl(habit.color, 0.9), scale: fill }}
         />
 
-        {/* streak badge — in the slot the old "…" button had (top 16px, 28px tall) */}
-        <span className="absolute inset-x-0 top-4 z-10 flex justify-center gap-1.5">
+        {/* streak badge — top centre, where the old "…" button sat */}
+        <span className="absolute inset-x-0 top-5 z-10 flex justify-center gap-1.5">
           {done && (
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-background">
-              <Check size={15} strokeWidth={3} aria-hidden />
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background">
+              <Check size={17} strokeWidth={3} aria-hidden />
             </span>
           )}
-          <BoltBadge count={habit.streak.current} />
+          <BoltBadge count={habit.streak.current} size="lg" />
         </span>
 
-        <span className="relative z-[5] flex min-h-[200px] flex-col items-center justify-center gap-2 px-8 py-12">
-          <span className="font-display text-3xl leading-tight">{habit.name}</span>
-          <span className="pt-1 text-xs text-muted-foreground">{copy.cardIntro}</span>
-          <span className="font-display text-lg leading-snug">{habit.identity}</span>
+        <span className="relative z-[5] flex min-h-[240px] flex-col items-center justify-center gap-2.5 px-8 py-14">
+          <span className="font-display text-4xl leading-tight">{habit.name}</span>
+          <span className="pt-1 text-sm text-muted-foreground">{copy.cardIntro}</span>
+          <span className="font-display text-[22px] leading-snug">{habit.identity}</span>
           {atRisk && (
-            <span className="pt-2 text-[11px] font-semibold uppercase tracking-wide text-q-amber">
+            <span className="pt-2 text-[13px] font-semibold uppercase tracking-wide text-q-amber">
               Don't miss twice
             </span>
           )}

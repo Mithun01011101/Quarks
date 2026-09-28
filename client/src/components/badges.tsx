@@ -11,7 +11,7 @@ export function BoltBadge({
   className,
 }: {
   count: number;
-  size?: "md" | "sm";
+  size?: "lg" | "md" | "sm";
   className?: string;
 }) {
   if (count <= 0) return null;
@@ -19,13 +19,15 @@ export function BoltBadge({
     <span
       className={cn(
         "bolt-badge inline-flex shrink-0 items-center font-bold tabular-nums shadow-sm",
-        size === "md"
-          ? "h-7 gap-1 rounded-[14px] pl-[9px] pr-[11px] text-sm"
-          : "h-[26px] gap-[3px] rounded-[13px] pl-2 pr-2.5 text-[13px]",
+        size === "lg"
+          ? "h-8 gap-1 rounded-[16px] pl-2.5 pr-3 text-base"
+          : size === "md"
+            ? "h-7 gap-1 rounded-[14px] pl-[9px] pr-[11px] text-sm"
+            : "h-[26px] gap-[3px] rounded-[13px] pl-2 pr-2.5 text-[13px]",
         className,
       )}
     >
-      <Zap size={size === "md" ? 13 : 12} fill="currentColor" strokeWidth={0} aria-hidden />
+      <Zap size={size === "lg" ? 15 : size === "md" ? 13 : 12} fill="currentColor" strokeWidth={0} aria-hidden />
       {count}
     </span>
   );

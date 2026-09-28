@@ -467,9 +467,9 @@ export default function TodayTab() {
                     {paused.map((h) => (
                       <div
                         key={h.id}
-                        className="flex h-[66px] items-center gap-3 rounded-[24px] border border-dashed border-border px-4"
+                        className="flex h-[76px] items-center gap-3 rounded-[28px] border border-dashed border-border px-4"
                       >
-                        <p className="min-w-0 flex-1 truncate font-display text-base text-muted-foreground">
+                        <p className="min-w-0 flex-1 truncate font-display text-lg text-muted-foreground">
                           {h.name}
                         </p>
                         <Button

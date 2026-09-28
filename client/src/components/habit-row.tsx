@@ -20,10 +20,10 @@ import { cn } from "@/lib/utils";
  */
 export type RowVariant = "compact" | "done" | "skipped" | "offday";
 
-// Every row keeps the pre-redesign compact row's geometry, measured to the
-// pixel (owner's choice): 66px tall, 24px corners, 16px side padding, a 44px
-// circle 16px in from the edge and a 16px name.
-const DISC = 44;
+// Every row is the pre-redesign compact row scaled up ~15% (owner: "make the
+// bubbles bigger"): 76px tall, 28px corners, 16px side padding, a 52px circle
+// 16px in from the edge and an 18px name.
+const DISC = 52;
 const DISC_LEFT = 16;
 
 /**
@@ -77,22 +77,22 @@ export function HabitRow({
   });
 
   const glyph = Icon ? (
-    <Icon size={16} strokeWidth={2} aria-hidden />
+    <Icon size={20} strokeWidth={2} aria-hidden />
   ) : (
-    <span className="font-display text-sm">{habit.name.slice(0, 1).toUpperCase()}</span>
+    <span className="font-display text-base">{habit.name.slice(0, 1).toUpperCase()}</span>
   );
 
   let discEl: React.ReactNode;
   if (done) {
     discEl = (
       <span className="flex h-full w-full items-center justify-center rounded-full bg-foreground text-background">
-        <Check size={16} strokeWidth={3} aria-hidden />
+        <Check size={20} strokeWidth={3} aria-hidden />
       </span>
     );
   } else if (skipped) {
     discEl = (
       <span className="flex h-full w-full items-center justify-center rounded-full bg-secondary text-muted-foreground">
-        <Minus size={16} strokeWidth={2.4} aria-hidden />
+        <Minus size={20} strokeWidth={2.4} aria-hidden />
       </span>
     );
   } else if (variant === "offday") {
@@ -117,15 +117,15 @@ export function HabitRow({
 
   let trailing: React.ReactNode = null;
   if (variant === "skipped") {
-    trailing = <span className="text-xs font-medium text-muted-foreground">Skipped</span>;
+    trailing = <span className="text-[13px] font-medium text-muted-foreground">Skipped</span>;
   } else if (variant === "offday") {
     trailing = (
-      <span className="text-xs font-medium text-muted-foreground">
+      <span className="text-[13px] font-medium text-muted-foreground">
         {daysShort(habit.scheduleDays)}
       </span>
     );
   } else {
-    trailing = <BoltBadge count={habit.streak.current} size="sm" />;
+    trailing = <BoltBadge count={habit.streak.current} />;
   }
 
   const streak = streakLabel(habit.streak.current);
@@ -159,7 +159,7 @@ export function HabitRow({
         aria-label={label}
         className={cn(
           "relative flex w-full items-center overflow-hidden border text-left select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          "h-[66px] gap-3 rounded-[24px] pr-4",
+          "h-[76px] gap-3.5 rounded-[28px] pr-4",
           done
             ? "border-q-done-border bg-q-done"
             : skipped
@@ -213,13 +213,13 @@ export function HabitRow({
         <span className="relative z-[5] flex min-w-0 flex-1 flex-col">
           <span
             className={cn(
-              "truncate font-display text-base",
+              "truncate font-display text-lg",
               (variant === "offday" || skipped) && !done && "text-muted-foreground",
             )}
           >
             {habit.name}
           </span>
-          {atRisk && <span className="text-[11px] font-medium text-q-amber">don't miss twice</span>}
+          {atRisk && <span className="text-xs font-medium text-q-amber">don't miss twice</span>}
         </span>
         <span className="relative z-[5] shrink-0">{trailing}</span>
       </motion.button>

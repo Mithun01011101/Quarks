@@ -207,10 +207,12 @@ export default function FocusTab() {
           so the tab slide-in transform can't re-anchor its fixed position. */}
       {createPortal(
         <>
+          {/* fades the page behind Begin; stops at the tab bar's top edge so
+              the see-through bar stays glossy */}
           <div
             aria-hidden
-            className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-b from-background/0 via-background/90 to-background"
-            style={{ height: "calc(max(env(safe-area-inset-bottom), 12px) + 176px)" }}
+            className="pointer-events-none fixed inset-x-0 z-30 h-28 bg-gradient-to-b from-background/0 via-background/90 to-background"
+            style={{ bottom: "calc(max(env(safe-area-inset-bottom), 12px) + 64px)" }}
           />
           <div
             className="fixed inset-x-0 z-40 mx-auto w-full max-w-lg px-4"
