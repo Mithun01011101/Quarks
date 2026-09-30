@@ -72,15 +72,16 @@
      the pre-redesign app showed it) until the dots moved under the habits;
      the owner then asked for lighter (2026-09-30). */
   --paper-dots-alpha: 0.45;
-  /* Soft butter-yellow wash behind every screen's header (.paper-wash) */
-  --paper-tint: 48 80% 87%;
+  /* Whitish-yellow wash behind every screen's header (.paper-wash) — the
+     owner toned the first butter yellow (48 80% 87%) down on 2026-09-30 */
+  --paper-tint: 48 95% 95.5%;
 }
 
 .dark {
   color-scheme: dark;
   /* light dots on ink glare, so a notch lighter than in light mode */
   --paper-dots-alpha: 0.3;
-  --paper-tint: 42 34% 14%;
+  --paper-tint: 40 20% 12%;
   --background: 26 12% 7%;
   --foreground: 40 30% 88%;
   --card: 28 11% 10%;
