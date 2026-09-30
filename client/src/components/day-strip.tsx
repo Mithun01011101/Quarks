@@ -56,7 +56,7 @@ export function DayStrip({
                 className="absolute inset-0"
                 aria-hidden
               >
-                {/* opaque centre: the header's dot texture stays out of the ring */}
+                {/* see-through centre, so the header's yellow wash shows inside the ring */}
                 <circle cx="20" cy="20" r={R} strokeWidth="3" className="fill-transparent stroke-border" />
                 {frac > 0 && (
                   <circle

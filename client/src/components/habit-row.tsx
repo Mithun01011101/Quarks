@@ -167,7 +167,7 @@ export function HabitRow({
                 "border-dashed border-border bg-background bg-[linear-gradient(hsl(var(--card)/0.5),hsl(var(--card)/0.5))]"
               : variant === "offday"
                 ? "border-dashed border-border bg-background"
-                : "border-border/80 bg-q-todo",
+                : "border-border/80 bg-card",
           atRisk && "border-dashed border-q-amber-line",
         )}
         style={{

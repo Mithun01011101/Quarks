@@ -73,8 +73,6 @@ export default {
         // Uniform completed pebble
         "q-done": "hsl(var(--q-done) / <alpha-value>)",
         "q-done-border": "hsl(var(--q-done-border) / <alpha-value>)",
-        // Unfinished pebble (to-do card / compact row)
-        "q-todo": "hsl(var(--q-todo) / <alpha-value>)",
         // Deep end of the yellow badge gradient (underline accents)
         bolt: "hsl(var(--flame-b) / <alpha-value>)",
       },
