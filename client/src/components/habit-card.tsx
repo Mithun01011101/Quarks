@@ -100,7 +100,7 @@ export function HabitCard({
           // twice" line) or when its words wrap. Keep the badge row out of the
           // flow so it never moves the text.
           "relative block w-full overflow-hidden rounded-[96px] border text-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          done ? "border-q-done-border bg-q-done" : "border-border/80 bg-card",
+          done ? "border-q-done-border bg-q-done" : "border-border/80 bg-q-todo",
           atRisk && "border-2 border-dashed border-q-amber-line",
         )}
         style={{

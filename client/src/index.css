@@ -67,14 +67,19 @@
      Bare HSL triples like the habit colors so hsl(var(--q-done) / a) works. */
   --q-done: 40 34% 84%;
   --q-done-border: 40 24% 74%;
+  /* Unfinished pebble (to-do cards + compact to-do rows on Today): the same
+     whitish yellow as the header wash in light mode — owner, 2026-09-30 */
+  --q-todo: var(--paper-tint);
 
   /* Strength of the dotted graph paper (.paper-dots). It was full ink (as
      the pre-redesign app showed it) until the dots moved under the habits;
      the owner then asked for lighter (2026-09-30). */
   --paper-dots-alpha: 0.45;
-  /* Whitish-yellow wash behind every screen's header (.paper-wash) — the
-     owner toned the first butter yellow (48 80% 87%) down on 2026-09-30 */
-  --paper-tint: 48 95% 95.5%;
+  /* Whitish-yellow wash behind every screen's header (.paper-wash), also worn
+     by the unfinished habit bubbles (--q-todo). 2026-09-30: the owner toned
+     the first butter yellow (48 80% 87%) down to 48 95% 95.5%, then asked
+     for "just a hint" more yellow. */
+  --paper-tint: 48 95% 94%;
 }
 
 .dark {
@@ -105,6 +110,8 @@
   /* Uniform completed pebble on ink — warm charcoal, same for every habit */
   --q-done: 34 10% 19%;
   --q-done-border: 34 9% 27%;
+  /* the yellow unfinished pebble is light-mode only */
+  --q-todo: var(--card);
 
   --q-amber: 40 80% 60%;
   --q-amber-soft: 38 31% 17%;
