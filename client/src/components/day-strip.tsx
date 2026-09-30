@@ -42,7 +42,7 @@ export function DayStrip({
           >
             <span
               className={cn(
-                "on-paper text-[11px] leading-[14px]",
+                "text-[11px] leading-[14px]",
                 isToday || active ? "font-bold text-foreground" : "font-medium text-muted-foreground",
               )}
             >
@@ -57,7 +57,7 @@ export function DayStrip({
                 aria-hidden
               >
                 {/* opaque centre: the header's dot texture stays out of the ring */}
-                <circle cx="20" cy="20" r={R} strokeWidth="3" className="fill-background stroke-border" />
+                <circle cx="20" cy="20" r={R} strokeWidth="3" className="fill-transparent stroke-border" />
                 {frac > 0 && (
                   <circle
                     cx="20"

@@ -163,9 +163,10 @@ export function HabitRow({
           done
             ? "border-q-done-border bg-q-done"
             : skipped
-              ? "border-dashed border-border bg-card/50"
+              ? // solid, so the dotted paper doesn't show through (was bg-card/50)
+                "border-dashed border-border bg-background bg-[linear-gradient(hsl(var(--card)/0.5),hsl(var(--card)/0.5))]"
               : variant === "offday"
-                ? "border-dashed border-border bg-transparent"
+                ? "border-dashed border-border bg-background"
                 : "border-border/80 bg-card",
           atRisk && "border-dashed border-q-amber-line",
         )}

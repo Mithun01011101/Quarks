@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Plus, X } from "lucide-react";
 import type { Habit, ProgressOverview, TodayHabit, TodayView } from "@shared/schema";
+import { PaperHeader } from "@/components/paper-header";
 import { HabitCard, type Celebration } from "@/components/habit-card";
 import { HabitRow } from "@/components/habit-row";
 import { HabitSheet } from "@/components/habit-sheet";
@@ -70,7 +71,7 @@ const itemMotion = {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+    <p className="on-paper px-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
       {children}
     </p>
   );
@@ -303,7 +304,7 @@ export default function TodayTab() {
       ) : (
         <div className="space-y-5 pb-2">
           {/* ---- Header: settings, day + progress, add habit ---- */}
-          <div className="relative space-y-3.5">
+          <PaperHeader className="space-y-3.5">
             <header className="relative flex h-11 items-center gap-3">
               <button
                 type="button"
@@ -315,7 +316,7 @@ export default function TodayTab() {
                 <span className="h-[7px] w-[7px] rounded-full bg-q-gold" />
                 <span className="h-[7px] w-[7px] rounded-full bg-q-sage" />
               </button>
-              <div className="on-paper min-w-0 flex-1">
+              <div className="min-w-0 flex-1">
                 <h1 className="font-display text-[28px] font-medium leading-[30px] tracking-[-0.01em]">
                   {dayTitle(viewDate, realToday)}
                 </h1>
@@ -348,21 +349,21 @@ export default function TodayTab() {
                 onSelect={setViewDate}
               />
             </div>
-          </div>
+          </PaperHeader>
 
           {flash && (
             <p
               role="alert"
-              className="rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+              className="rounded-2xl border border-destructive/40 bg-background bg-[linear-gradient(hsl(var(--destructive)/0.1),hsl(var(--destructive)/0.1))] px-4 py-3 text-sm text-destructive"
             >
               {flash}
             </p>
           )}
 
           {isLoading ? (
-            <p className="px-1 py-8 text-sm text-muted-foreground">Loading…</p>
+            <p className="on-paper px-1 py-8 text-sm text-muted-foreground">Loading…</p>
           ) : error ? (
-            <p className="px-1 py-8 text-sm text-destructive">
+            <p className="on-paper px-1 py-8 text-sm text-destructive">
               Couldn't load the day: {(error as Error).message}
             </p>
           ) : empty ? (
@@ -372,8 +373,8 @@ export default function TodayTab() {
                 <span className="h-2.5 w-2.5 rounded-full bg-q-gold/70" />
                 <span className="h-2.5 w-2.5 rounded-full bg-q-sage/70" />
               </div>
-              <h2 className="font-display text-2xl">Start with one tiny habit</h2>
-              <p className="max-w-[250px] text-sm text-muted-foreground">
+              <h2 className="on-paper font-display text-2xl">Start with one tiny habit</h2>
+              <p className="on-paper max-w-[250px] text-sm text-muted-foreground">
                 Something you can do in two minutes. Tap “Habits” to build it.
               </p>
             </div>
@@ -398,7 +399,7 @@ export default function TodayTab() {
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center gap-3.5 rounded-[36px] border border-dashed border-border px-4 py-4"
+                  className="flex items-center gap-3.5 rounded-[36px] border border-dashed border-border bg-background px-4 py-4"
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
                     <Check size={18} strokeWidth={3} aria-hidden />
@@ -459,7 +460,7 @@ export default function TodayTab() {
                     {paused.map((h) => (
                       <div
                         key={h.id}
-                        className="flex h-[76px] items-center gap-3 rounded-[28px] border border-dashed border-border px-4"
+                        className="flex h-[76px] items-center gap-3 rounded-[28px] border border-dashed border-border bg-background px-4"
                       >
                         <p className="min-w-0 flex-1 truncate font-display text-lg text-muted-foreground">
                           {h.name}

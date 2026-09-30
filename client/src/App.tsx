@@ -34,17 +34,16 @@ export default function App() {
           className="relative flex-1 overflow-x-hidden px-4 pb-32"
           style={{ paddingTop: "max(env(safe-area-inset-top), 16px)" }}
         >
-          {/* dotted graph paper behind every screen's header; it stays put
-              while the tabs slide over it */}
-          <div
-            aria-hidden
-            className="paper-dots pointer-events-none absolute inset-x-0 top-0"
-            style={{ height: "calc(max(env(safe-area-inset-top), 16px) + 160px)" }}
-          />
+          {/* dotted graph paper: one sheet under the whole app that stays put
+              while the tabs slide over it; each screen's PaperHeader covers
+              its top with the yellow wash */}
+          <div aria-hidden className="paper-dots pointer-events-none absolute inset-0" />
           <AnimatePresence mode="popLayout" custom={direction}>
             <motion.div
               key={tab}
-              className="relative"
+              // isolate: the header wash (-z-10) paints behind this screen's
+              // content but still above the shared dotted paper
+              className="relative isolate"
               custom={direction}
               initial={{ opacity: 0, x: direction * 48 }}
               animate={{ opacity: 1, x: 0 }}

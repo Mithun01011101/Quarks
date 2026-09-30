@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, Minus, Play, Plus } from "lucide-react";
 import type { FocusSession as FocusSessionRow, TodayHabit, TodayView } from "@shared/schema";
 import { FocusSession } from "@/components/focus-session";
+import { PaperHeader } from "@/components/paper-header";
 import { api, queryKeys } from "@/lib/api";
 import { localToday } from "@/lib/dates";
 import { quarkColor } from "@/lib/colors";
@@ -72,12 +73,14 @@ export default function FocusTab() {
   }
 
   const header = (
-    <header className="on-paper space-y-1 px-1">
-      <h1 className="font-display text-[30px] font-medium leading-[34px] tracking-[-0.01em]">
-        Focus
-      </h1>
-      <p className="text-sm text-muted-foreground">Give one habit your full attention.</p>
-    </header>
+    <PaperHeader>
+      <header className="space-y-1 px-1">
+        <h1 className="font-display text-[30px] font-medium leading-[34px] tracking-[-0.01em]">
+          Focus
+        </h1>
+        <p className="text-sm text-muted-foreground">Give one habit your full attention.</p>
+      </header>
+    </PaperHeader>
   );
 
   if (view && habits.length === 0) {
@@ -85,8 +88,8 @@ export default function FocusTab() {
       <div className="space-y-6">
         {header}
         <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
-          <h2 className="font-display text-xl">Nothing to focus on yet</h2>
-          <p className="max-w-[240px] text-sm text-muted-foreground">
+          <h2 className="on-paper font-display text-xl">Nothing to focus on yet</h2>
+          <p className="on-paper max-w-[240px] text-sm text-muted-foreground">
             Create a habit on the Today tab first — then give it your full attention here.
           </p>
         </div>
@@ -141,7 +144,7 @@ export default function FocusTab() {
           >
             <Minus size={20} strokeWidth={2.4} />
           </button>
-          <p aria-live="polite" className="flex flex-1 items-baseline justify-center gap-1.5">
+          <p aria-live="polite" className="on-paper flex flex-1 items-baseline justify-center gap-1.5">
             <span className="font-display text-5xl font-medium leading-[52px]">{minutes}</span>
             <span className="text-[15px] text-muted-foreground">
               {minutes === 1 ? "minute" : "minutes"}
@@ -169,7 +172,7 @@ export default function FocusTab() {
                 "h-11 min-w-0 flex-1 cursor-pointer rounded-full border text-sm tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 minutes === m
                   ? "border-primary bg-primary font-semibold text-primary-foreground"
-                  : "border-input font-medium hover:bg-accent/60",
+                  : "border-input bg-background font-medium hover:bg-accent/60",
               )}
             >
               {m}

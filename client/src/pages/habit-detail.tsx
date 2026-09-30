@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Flame } from "lucide-react";
 import type { DayState, HabitDetail } from "@shared/schema";
 import { MonthHeatCalendar } from "@/components/month-heat-calendar";
+import { PaperHeader } from "@/components/paper-header";
 import { api, queryKeys } from "@/lib/api";
 import { currentMonth, localToday } from "@/lib/dates";
 import { habitSentence } from "@/lib/sentence";
@@ -65,10 +66,12 @@ export function HabitDetailPage({
   if (isLoading || !detail) {
     return (
       <div className="space-y-4 pb-2">
-        <header className="flex h-11 items-center gap-3">
-          <BackButton onClose={onClose} />
-        </header>
-        <p className={cn("px-1 text-sm", error ? "text-destructive" : "text-muted-foreground")}>
+        <PaperHeader>
+          <header className="flex h-11 items-center gap-3">
+            <BackButton onClose={onClose} />
+          </header>
+        </PaperHeader>
+        <p className={cn("on-paper px-1 text-sm", error ? "text-destructive" : "text-muted-foreground")}>
           {error ? `Couldn't load this habit: ${(error as Error).message}` : "Loading…"}
         </p>
       </div>
@@ -79,22 +82,24 @@ export function HabitDetailPage({
 
   return (
     <div className="space-y-4 pb-2">
-      <header className="flex h-11 items-center gap-3">
-        <BackButton onClose={onClose} />
-        <span className={cn("h-3 w-3 shrink-0 rounded-full", color.bg)} aria-hidden />
-        <h2 className="on-paper min-w-0 flex-1 truncate font-display text-[26px] font-medium leading-[30px]">
-          {detail.habit.name}
-        </h2>
-      </header>
+      <PaperHeader className="space-y-4">
+        <header className="flex h-11 items-center gap-3">
+          <BackButton onClose={onClose} />
+          <span className={cn("h-3 w-3 shrink-0 rounded-full", color.bg)} aria-hidden />
+          <h2 className="min-w-0 flex-1 truncate font-display text-[26px] font-medium leading-[30px]">
+            {detail.habit.name}
+          </h2>
+        </header>
 
-      <p className="on-paper px-1 font-display text-base italic leading-[23px] text-foreground/85">
-        “{habitSentence(detail.habit)}”
-      </p>
-      {detail.streak.atRisk && (
-        <p className="on-paper flex items-center gap-1.5 px-1 text-[13px] font-semibold text-q-amber">
-          <Flame size={14} strokeWidth={2.2} aria-hidden /> Missed last time — don't miss twice.
+        <p className="px-1 font-display text-base italic leading-[23px] text-foreground/85">
+          “{habitSentence(detail.habit)}”
         </p>
-      )}
+        {detail.streak.atRisk && (
+          <p className="flex items-center gap-1.5 px-1 text-[13px] font-semibold text-q-amber">
+            <Flame size={14} strokeWidth={2.2} aria-hidden /> Missed last time — don't miss twice.
+          </p>
+        )}
+      </PaperHeader>
 
       <div className="grid grid-cols-4 gap-2">
         <Tile label="day streak" value={detail.streak.current} />

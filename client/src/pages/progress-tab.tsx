@@ -6,6 +6,7 @@ import { HabitDetailPage } from "@/pages/habit-detail";
 import { AnimatedNumber } from "@/components/animated-number";
 import { SegmentedControl } from "@/components/segmented-control";
 import { Switch } from "@/components/ui/switch";
+import { PaperHeader } from "@/components/paper-header";
 import {
   Drawer,
   DrawerClose,
@@ -81,7 +82,7 @@ function SectionLabel({ id, children }: { id?: string; children: React.ReactNode
   return (
     <p
       id={id}
-      className="px-1 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground"
+      className="on-paper px-1 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground"
     >
       {children}
     </p>
@@ -111,7 +112,7 @@ function WidgetGrid({
         </button>
       </div>
       {widgets.length === 0 ? (
-        <p className="rounded-3xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-3xl border border-dashed border-border bg-background px-4 py-6 text-center text-sm text-muted-foreground">
           No widgets pinned. Tap Edit to choose your stats.
         </p>
       ) : (
@@ -163,7 +164,7 @@ function RepetitionBars({
               type="button"
               onClick={() => onOpen(h.id)}
               aria-label={`${h.name}: ${h.reps} ${h.reps === 1 ? "rep" : "reps"}${note ? `, ${note.toLowerCase()}` : ""}. Open history.`}
-              className="block w-full cursor-pointer rounded-2xl px-1 py-2 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="on-paper block w-full cursor-pointer rounded-2xl px-1 py-2 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <span className="flex items-baseline gap-2">
                 <span className="max-w-[60%] shrink-0 truncate font-display text-[17px] leading-[22px]">
@@ -310,17 +311,18 @@ export default function ProgressTab() {
     );
   }
 
-  const title = (
-    <h1 className="on-paper px-1 font-display text-[30px] font-medium leading-[34px] tracking-[-0.01em]">
+  const heading = (
+    <h1 className="px-1 font-display text-[30px] font-medium leading-[34px] tracking-[-0.01em]">
       Progress
     </h1>
   );
+  const title = <PaperHeader>{heading}</PaperHeader>;
 
   if (isLoading) {
     return (
       <div className="space-y-4">
         {title}
-        <p className="px-1 py-8 text-sm text-muted-foreground">Loading…</p>
+        <p className="on-paper px-1 py-8 text-sm text-muted-foreground">Loading…</p>
       </div>
     );
   }
@@ -328,7 +330,7 @@ export default function ProgressTab() {
     return (
       <div className="space-y-4">
         {title}
-        <p className="px-1 py-8 text-sm text-destructive">
+        <p className="on-paper px-1 py-8 text-sm text-destructive">
           Couldn't load progress: {(error as Error).message}
         </p>
       </div>
@@ -339,8 +341,8 @@ export default function ProgressTab() {
       <div className="space-y-4">
         {title}
         <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
-          <h2 className="font-display text-xl">Nothing to chart yet</h2>
-          <p className="max-w-[240px] text-sm text-muted-foreground">
+          <h2 className="on-paper font-display text-xl">Nothing to chart yet</h2>
+          <p className="on-paper max-w-[240px] text-sm text-muted-foreground">
             Create a habit on the Today tab and complete it — your progress starts here.
           </p>
         </div>
@@ -350,17 +352,18 @@ export default function ProgressTab() {
 
   return (
     <div className="space-y-4 pb-2">
-      {title}
-
-      <SegmentedControl
-        label="Progress view"
-        options={[
-          { value: "progress", label: "Progress" },
-          { value: "milestones", label: "Milestones" },
-        ]}
-        value={view}
-        onChange={setView}
-      />
+      <PaperHeader className="space-y-4">
+        {heading}
+        <SegmentedControl
+          label="Progress view"
+          options={[
+            { value: "progress", label: "Progress" },
+            { value: "milestones", label: "Milestones" },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+      </PaperHeader>
 
       {view === "progress" ? (
         <>
