@@ -68,17 +68,18 @@
   --q-done: 40 34% 84%;
   --q-done-border: 40 24% 74%;
 
-  /* Strength of the dotted graph paper (.paper-dots): full ink, as the
-     pre-redesign app showed it. */
-  --paper-dots-alpha: 1;
+  /* Strength of the dotted graph paper (.paper-dots). It was full ink (as
+     the pre-redesign app showed it) until the dots moved under the habits;
+     the owner then asked for lighter (2026-09-30). */
+  --paper-dots-alpha: 0.45;
   /* Soft butter-yellow wash behind every screen's header (.paper-wash) */
   --paper-tint: 48 80% 87%;
 }
 
 .dark {
   color-scheme: dark;
-  /* light dots on ink glare at full strength */
-  --paper-dots-alpha: 0.5;
+  /* light dots on ink glare, so a notch lighter than in light mode */
+  --paper-dots-alpha: 0.3;
   --paper-tint: 42 34% 14%;
   --background: 26 12% 7%;
   --foreground: 40 30% 88%;
@@ -145,8 +146,7 @@
 
   /* Dotted graph paper: ONE sheet behind the whole app (App.tsx), below
      every screen's header — the pre-redesign app's grid (1px dots every
-     14px), centred. The old build meant it at 6% but its colour tokens
-     dropped that class, so the owner knew it at full ink; keep it that way. */
+     14px), centred, at --paper-dots-alpha (the owner's chosen strength). */
   .paper-dots {
     color: hsl(var(--foreground) / var(--paper-dots-alpha));
     background-image: radial-gradient(currentColor 1px, transparent 1.4px);

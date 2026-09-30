@@ -173,7 +173,8 @@ function RepetitionBars({
                 <span
                   className={cn(
                     "min-w-0 flex-1 truncate text-xs",
-                    h.streak.atRisk ? "font-semibold text-q-amber" : "text-muted-foreground",
+                    // the streak reads clearly over the dots (owner, 2026-09-30)
+                    h.streak.atRisk ? "font-semibold text-q-amber" : "font-medium text-foreground/80",
                   )}
                 >
                   {note}
