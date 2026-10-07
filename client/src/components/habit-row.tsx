@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Minus, icons } from "lucide-react";
 import type { TodayHabit } from "@shared/schema";
-import { useHoldToComplete } from "@/hooks/use-hold-to-complete";
+import { HOLD_MS, useHoldToComplete } from "@/hooks/use-hold-to-complete";
 import { BurstCelebration, burstSeedFor } from "@/components/burst-celebration";
 import { BoltBadge } from "@/components/badges";
+import { HoldFill } from "@/components/hold-fill";
 import { isFreshCelebration, type Celebration } from "@/components/habit-card";
 import { playComplete } from "@/lib/audio";
-import { vibrate } from "@/lib/settings";
+import { hapticSuccess, hapticTick } from "@/lib/settings";
 import { quarkColor, quarkHsl, quarkInkVar } from "@/lib/colors";
 import { daysShort, streakLabel } from "@/lib/sentence";
 import { cn } from "@/lib/utils";
@@ -60,17 +61,17 @@ export function HabitRow({
     setPop(true);
   }, [celebrate?.at]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { fill, holding, handlers } = useHoldToComplete({
+  const { fillValues, holding, handlers } = useHoldToComplete({
     disabled: skipped,
     onFire: () => {
       suppressTap.current = true;
       if (!done) {
         playComplete();
-        vibrate(35);
+        hapticSuccess();
         setBurstSeed(burstSeedFor(habit.id));
         setPop(true);
       } else {
-        vibrate(15);
+        hapticTick();
       }
       onToggle(habit);
     },
@@ -177,9 +178,15 @@ export function HabitRow({
           userSelect: "none",
           WebkitTouchCallout: "none",
         }}
-        animate={{ scale: holding ? 0.98 : pop ? [0.94, 1.06, 0.99, 1] : 1 }}
+        // Same feel as the big card, scaled down for a slim row: sink while
+        // held, spring up from wherever it is on landing, ease back if let go.
+        animate={{ scale: holding ? 0.975 : pop ? [null, 1.04, 0.99, 1.006, 1] : 1 }}
         transition={
-          pop ? { duration: 0.5, times: [0, 0.3, 0.68, 1], ease: "easeOut" } : { duration: 0.15 }
+          holding
+            ? { duration: HOLD_MS / 1000 - 0.1, ease: [0.22, 1, 0.36, 1] }
+            : pop
+              ? { duration: 0.5, times: [0, 0.32, 0.64, 0.85, 1], ease: "easeInOut" }
+              : { type: "spring", stiffness: 520, damping: 32 }
         }
         onAnimationComplete={() => setPop(false)}
         {...handlers}
@@ -198,16 +205,8 @@ export function HabitRow({
           onTap(habit);
         }}
       >
-        {/* fill radiates from the icon while holding (visual only) */}
-        <motion.span
-          aria-hidden
-          className="pointer-events-none absolute top-1/2 aspect-square w-[240%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{
-            left: DISC_LEFT + DISC / 2,
-            backgroundColor: quarkHsl(habit.color, 0.9),
-            scale: fill,
-          }}
-        />
+        {/* the habit's colour spreading from the thumb while held (visual only) */}
+        <HoldFill values={fillValues} color={quarkHsl(habit.color, 0.9)} />
         <span className="relative z-[5] shrink-0" style={{ width: DISC, height: DISC }}>
           {discEl}
         </span>

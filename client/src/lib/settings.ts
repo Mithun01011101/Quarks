@@ -44,3 +44,16 @@ export function stopVibration() {
     // best-effort
   }
 }
+
+/** A haptic that starts after a short silence, so it reads as its own beat
+ *  after the hold's continuous hum instead of just stretching it. */
+function afterHum(pattern: number | number[]) {
+  stopVibration();
+  window.setTimeout(() => vibrate(pattern), 60);
+}
+
+/** The "done" reward: a light tap then a firmer one. */
+export const hapticSuccess = () => afterHum([18, 70, 42]);
+
+/** Undo: one light tick. */
+export const hapticTick = () => afterHum(15);

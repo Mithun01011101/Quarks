@@ -23,7 +23,7 @@ import { HabitDetailPage } from "@/pages/habit-detail";
 import { useTabReselect } from "@/hooks/use-tab-reselect";
 import { api, queryKeys } from "@/lib/api";
 import { initAudio, playComplete } from "@/lib/audio";
-import { vibrate } from "@/lib/settings";
+import { hapticSuccess } from "@/lib/settings";
 import { dayTitle, localToday, shiftDays, shortDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
@@ -219,7 +219,7 @@ export default function TodayTab() {
     linger(habit.id, SHEET_CLOSE_MS + LINGER_MS);
     later(() => {
       playComplete();
-      vibrate(35);
+      hapticSuccess();
       setCelebrations((c) => ({
         ...c,
         [habit.id]: { seed: burstSeedFor(habit.id), at: Date.now() },
